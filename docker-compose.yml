@@ -1,0 +1,8 @@
+version: '2.1'
+services:
+    capabilities-proxy:
+      image: pdok/wmts-kvp-to-restful:latest
+      restart: unless-stopped      
+      command: ["wmts-kvp-to-restful", "-host=https://geodata.nationaalgeoregister.nl"]
+      ports:
+       - "9001:9001"
