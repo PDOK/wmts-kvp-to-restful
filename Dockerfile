@@ -1,10 +1,6 @@
 FROM scratch 
  FROM golang:1.11-alpine3.8 AS build-env
 
-ENV http_proxy http://www-proxy.cs.kadaster.nl:8082
-ENV https_proxy http://www-proxy.cs.kadaster.nl:8082
-ENV no_proxy localhost,127.0.0.1,.so.kadaster.nl,.in.kadaster.nl,.fto.kadaster.nl,.cs.kadaster.nl
-
 RUN apk update && apk upgrade && \
    apk add --no-cache bash git gcc musl-dev
 
