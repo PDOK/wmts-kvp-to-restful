@@ -34,7 +34,7 @@ becomes
 /ws/raadpleegdiensten/wmts/grb_bsk_grijs/BPL72VL/BPL72VL:11/730/1072.png
 ```
 
-with a incorrect tilematrix value of BPL72VL:11 instead of 11.
+with a incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex the prefix will we stripped from the tilematrix value.
 
 ![gwc-issue](img/gwc-issue.png)
 
