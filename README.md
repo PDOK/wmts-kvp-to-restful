@@ -20,7 +20,7 @@ becomes
 
 ## Geowebcache issue
 
-The WMTS-KVP-to-RESTful proxy will try to solve the issue with Geowebcache WMTS KVP generated requests. The issue is that the tilematrix values generated contain the tilematrixset as a prefix. This something that doesn't match well with a WMTS RESTful request. This is a issue that some are [experiencing](https://geoforum.nl/t/wmts-tilematrix-parameter-maakt-request-ongelding/2928) and that we ourself have experienced, especially when are service is migrated from Geowebcache to a new WMTS server (like mapproxy).
+The WMTS-KVP-to-RESTful proxy will try to solve the issue with Geowebcache WMTS KVP generated requests. The issue is that the tilematrix values generated contain the tilematrixset as a prefix. This something that doesn't match well with a WMTS RESTful request. This is a issue that some are [experiencing](https://geoforum.nl/t/wmts-tilematrix-parameter-maakt-request-ongelding/2928) and that we ourself have experienced, especially when services are migrated from Geowebcache to a new WMTS server (like mapproxy).
 
 A invalid WMTS RESTful path would be generate, the WMTS KVP request:
 
