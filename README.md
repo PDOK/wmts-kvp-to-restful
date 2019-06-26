@@ -4,7 +4,7 @@
 
 WMTS-KVP-to-RESTful is a WMTS RESTful proxy that rewrites WMTS KVP requests to WMTS RESTful requests.
 
-Template used: org-path/{layer}/{tilematrixset}/{tilematrix}/{tilecol}/{tilerow}.{translated format}
+Template used: original-path/{layer}/{tilematrixset}/{tilematrix}/{tilecol}/{tilerow}.{translated format}
 
 ## Example
 
