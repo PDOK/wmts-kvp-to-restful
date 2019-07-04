@@ -45,6 +45,27 @@ func TestGWCTileMatrixIssue(t *testing.T) {
 	}
 }
 
+func TestObscureGWCTileMatrixIssue(t *testing.T) {
+	layer := "testlayer"
+	tilematrixset := "EPSG:25831:RWS"
+	gwctilematrixprefix := "EPSG:25831:RWS:"
+	tilematrix := "4"
+	tilecol := "5"
+	tilerow := "5"
+	format := "image/png"
+
+	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {gwctilematrixprefix + tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
+
+	newpath, exception := queryToPath(query)
+	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
+
+	if newpath != expectednewpath {
+		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
+	} else if exception != nil {
+		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
+	}
+}
+
 func TestImagePng8FormatMapping(t *testing.T) {
 	layer := "testlayer"
 	tilematrixset := "EPSG:3857"
