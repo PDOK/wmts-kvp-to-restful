@@ -1,5 +1,8 @@
 # wmts-kvp-to-restful
 
+![GitHub release](https://img.shields.io/github/release/PDOK/wmts-kvp-to-restful.svg)
+![Docker Pulls](https://img.shields.io/docker/pulls/pdok/wmts-kvp-to-restful.svg)
+
 ## Purpose
 
 WMTS-KVP-to-RESTful is a WMTS RESTful proxy that rewrites WMTS KVP requests to WMTS RESTful requests.
