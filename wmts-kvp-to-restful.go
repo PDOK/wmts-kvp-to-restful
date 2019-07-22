@@ -61,6 +61,10 @@ func queryToPath(query map[string][]string) (path string, exception []byte) {
 	return path, nil
 }
 
+func buildNewPath(urlPath, newQueryPath string) string {
+	return strings.TrimRight(urlPath, "/") + newQueryPath
+}
+
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -102,7 +106,7 @@ func main() {
 				w.Write([]byte(`{"status": "rewrite went wrong"}`))
 				return
 			}
-			r.URL.Path = r.URL.Path + newpath
+			r.URL.Path = buildNewPath(r.URL.Path, newpath)
 			r.URL.RawQuery = ""
 		}
 
