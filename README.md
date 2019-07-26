@@ -21,6 +21,8 @@ becomes
 /tiles/service/wmts/brtachtergrondkaart/EPSG:28992/04/7/8.png
 ```
 
+A request that cannot be rewriten is passed through unhandled.
+
 ## Geowebcache issue
 
 The WMTS-KVP-to-RESTful proxy will try to solve the issue with Geowebcache WMTS KVP generated requests. The issue is that the tilematrix values generated contain the tilematrixset as a prefix. This something that doesn't match well with a WMTS RESTful request. This is a issue that some are [experiencing](https://geoforum.nl/t/wmts-tilematrix-parameter-maakt-request-ongelding/2928) and that we ourself have experienced, especially when services are migrated from Geowebcache to a new WMTS server (like mapproxy).
@@ -36,8 +38,6 @@ becomes
 ```http
 /ws/raadpleegdiensten/wmts/grb_bsk_grijs/BPL72VL/BPL72VL:11/730/1072.png
 ```
-
-An incomplete request is passed through unhandled. 
 
 With an incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex the prefix will be stripped from the tilematrix value.
 
