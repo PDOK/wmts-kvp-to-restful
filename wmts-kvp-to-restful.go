@@ -64,11 +64,14 @@ func buildNewPath(urlPath, newQueryPath string) string {
 	return strings.TrimRight(urlPath, "/") + newQueryPath
 }
 
-func isTileQuery(query map[string][]string) bool {
-	for _, key := range [6]string{
+func isValidTileQuery(query map[string][]string) bool {
+	for _, param := range [6]string{
 		"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format",
 	} {
-		_, ok := query[key]
+		ok := false
+		for key := range query {
+			ok = ok || (strings.ToLower(key) == param)
+		}
 		if !ok {
 			return false
 		}
@@ -110,7 +113,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
-		if isTileQuery(query) {
+		if isValidTileQuery(query) {
 			newpath, exception := queryToPath(query)
 			if exception != nil {
 				w.WriteHeader(http.StatusInternalServerError)

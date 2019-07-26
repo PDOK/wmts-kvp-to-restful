@@ -133,10 +133,22 @@ func TestCompleteTileQuery(t *testing.T) {
 		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "tilerow": {"e"}, "format": {"f"},
 	}
 
-	checkResult := isTileQuery(query)
+	checkResult := isValidTileQuery(query)
 
 	if !checkResult {
 		t.Errorf("Complete query was found incomplete.")
+	}
+}
+
+func TestTileQueryCaseInsensitive(t *testing.T) {
+	query := map[string][]string{
+		"LAYER": {"a"}, "TILEMATRIXSET": {"b"}, "tileMATRIX": {"c"}, "TILECOL": {"d"}, "TILErow": {"e"}, "format": {"f"},
+	}
+
+	checkResult := isValidTileQuery(query)
+
+	if !checkResult {
+		t.Errorf("Tile query check does not handle uppercase correctly.")
 	}
 }
 
@@ -145,7 +157,7 @@ func TestIncompleteTileQuery(t *testing.T) {
 		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
 	}
 
-	checkResult := isTileQuery(query)
+	checkResult := isValidTileQuery(query)
 
 	if checkResult {
 		t.Errorf("Incomplete query was found complete.")
