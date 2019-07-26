@@ -127,3 +127,27 @@ func TestImageJpegFormatMapping(t *testing.T) {
 		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
+
+func TestCompleteTileQuery(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "tilerow": {"e"}, "format": {"f"},
+	}
+
+	checkResult := isTileQuery(query)
+
+	if !checkResult {
+		t.Errorf("Complete query was found incomplete.")
+	}
+}
+
+func TestIncompleteTileQuery(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+	}
+
+	checkResult := isTileQuery(query)
+
+	if checkResult {
+		t.Errorf("Incomplete query was found complete.")
+	}
+}

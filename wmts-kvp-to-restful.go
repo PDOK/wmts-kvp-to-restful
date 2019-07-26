@@ -15,9 +15,8 @@ func queryToPath(query map[string][]string) (path string, exception []byte) {
 
 	var regex = regexp.MustCompile(`^.*:(.*)$`)
 
-	for key := range query {
-
-		value := query[key][0]
+	for key, value := range query {
+		value := value[0]
 
 		if strings.ToLower(key) == "layer" {
 			layer = value
@@ -65,6 +64,18 @@ func buildNewPath(urlPath, newQueryPath string) string {
 	return strings.TrimRight(urlPath, "/") + newQueryPath
 }
 
+func isTileQuery(query map[string][]string) bool {
+	for _, key := range [6]string{
+		"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format",
+	} {
+		_, ok := query[key]
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -97,9 +108,10 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
 
-		if len(r.URL.Query()) != 0 {
-			newpath, exception := queryToPath(r.URL.Query())
+		if isTileQuery(query) {
+			newpath, exception := queryToPath(query)
 			if exception != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
