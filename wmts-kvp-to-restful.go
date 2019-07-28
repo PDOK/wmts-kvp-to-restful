@@ -91,22 +91,49 @@ const (
 	None            Operation = "none"
 )
 
+// prio in order: GetCapabilities, GetTiles, GetFeatureInfo
 func getOperation(query map[string][]string) Operation {
 	var request string
-	for key, value := range query {
+	for key, values := range query {
 		if strings.ToLower(key) == "request" {
-			if len(value) > 1 {
+			if len(values) > 1 {
+				var countGetCapabilites, countGetTile, countGetFeatureInfo int
+
+				for _, value := range values {
+
+					switch strings.ToLower(value) {
+					case string(GetCapabilities):
+						countGetCapabilites = countGetCapabilites + 1
+					case string(GetTile):
+						countGetTile = countGetTile + 1
+					case string(GetFeatureInfo):
+						countGetFeatureInfo = countGetFeatureInfo + 1
+					}
+				}
+
+				if countGetCapabilites > 0 {
+					return GetCapabilities
+				}
+
+				if countGetTile > 0 {
+					return GetTile
+				}
+
+				if countGetFeatureInfo > 0 {
+					return GetFeatureInfo
+				}
+
 				return None
 			}
-			request = strings.ToLower(value[0])
+			request = strings.ToLower(values[0])
 		}
 	}
 
 	switch request {
-	case string(GetCapabilities):
-		return GetCapabilities
 	case string(GetTile):
 		return GetTile
+	case string(GetCapabilities):
+		return GetCapabilities
 	case string(GetFeatureInfo):
 		return GetFeatureInfo
 	default:
@@ -114,9 +141,10 @@ func getOperation(query map[string][]string) Operation {
 	}
 }
 
-// TODO enable logging
+// TODO
+// enable logging
 // determine what to do with getcapabilities request and getfeatureinfo request...
-// point those to 'default' end-point or ignore them.
+// point those to 'default' end-point or ignore them...?
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -167,10 +195,10 @@ func main() {
 			}
 		case GetCapabilities:
 		case GetFeatureInfo:
-		case None:
+		case None: // Probably a MissingParameterValue Error
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.Write([]byte(`{"status": "Not an WMTS KVP request"}`))
+			w.Write([]byte(`{"status": "Not an valid WMTS KVP request"}`))
 			return
 		}
 
