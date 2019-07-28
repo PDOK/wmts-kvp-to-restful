@@ -163,3 +163,27 @@ func TestIncompleteTileQuery(t *testing.T) {
 		t.Errorf("Incomplete query was found complete.")
 	}
 }
+
+func TestGetTileOperation(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetTile"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetTile {
+		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
+	}
+}
+
+func TestMultipleRequestOperation(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetCapabilities", "GetTile", "GetTile", "GetTile"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != None {
+		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
+	}
+}

@@ -79,6 +79,44 @@ func isValidTileQuery(query map[string][]string) bool {
 	return true
 }
 
+// Operation is the constant type for the available WMTS Operations
+type Operation string
+
+// Const defining the available WMTS Operations
+// Maybe check if al the required KVP are available
+const (
+	GetCapabilities Operation = "getcapabilities"
+	GetTile         Operation = "gettile"
+	GetFeatureInfo  Operation = "getfeatureinfo"
+	None            Operation = "none"
+)
+
+func getOperation(query map[string][]string) Operation {
+	var request string
+	for key, value := range query {
+		if strings.ToLower(key) == "request" {
+			if len(value) > 1 {
+				return None
+			}
+			request = strings.ToLower(value[0])
+		}
+	}
+
+	switch request {
+	case string(GetCapabilities):
+		return GetCapabilities
+	case string(GetTile):
+		return GetTile
+	case string(GetFeatureInfo):
+		return GetFeatureInfo
+	default:
+		return None
+	}
+}
+
+// TODO enable logging
+// determine what to do with getcapabilities request and getfeatureinfo request...
+// point those to 'default' end-point or ignore them.
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -113,16 +151,27 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 
-		if isValidTileQuery(query) {
-			newpath, exception := queryToPath(query)
-			if exception != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-				w.Write([]byte(`{"status": "rewrite went wrong"}`))
-				return
+		switch getOperation(query) {
+		case GetTile:
+			if isValidTileQuery(query) {
+				newpath, exception := queryToPath(query)
+				if exception != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+					w.Write([]byte(`{"status": "rewrite went wrong"}`))
+					return
+				}
+
+				r.URL.Path = buildNewPath(r.URL.Path, newpath)
+				r.URL.RawQuery = "" // maybe parse none WMTS request KVP query parameters through, for debugging and tracing
 			}
-			r.URL.Path = buildNewPath(r.URL.Path, newpath)
-			r.URL.RawQuery = ""
+		case GetCapabilities:
+		case GetFeatureInfo:
+		case None:
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.Write([]byte(`{"status": "Not an WMTS KVP request"}`))
+			return
 		}
 
 		proxy.ServeHTTP(w, r)
