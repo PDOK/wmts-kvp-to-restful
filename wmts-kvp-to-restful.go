@@ -91,6 +91,72 @@ func validateTileQuery(query map[string][]string) []string {
 	return missingParams
 }
 
+// Operation is the constant type for the available WMTS Operations
+type Operation string
+
+// Const defining the available WMTS Operations
+// Maybe check if al the required KVP are available
+const (
+	GetCapabilities Operation = "getcapabilities"
+	GetTile         Operation = "gettile"
+	GetFeatureInfo  Operation = "getfeatureinfo"
+	None            Operation = "none"
+)
+
+// prio in order: GetCapabilities, GetTiles, GetFeatureInfo
+func getOperation(query map[string][]string) Operation {
+	var request string
+	for key, values := range query {
+		if strings.ToLower(key) == "request" {
+			if len(values) > 1 {
+				var countGetCapabilites, countGetTile, countGetFeatureInfo int
+
+				for _, value := range values {
+
+					switch strings.ToLower(value) {
+					case string(GetCapabilities):
+						countGetCapabilites = countGetCapabilites + 1
+					case string(GetTile):
+						countGetTile = countGetTile + 1
+					case string(GetFeatureInfo):
+						countGetFeatureInfo = countGetFeatureInfo + 1
+					}
+				}
+
+				if countGetCapabilites > 0 {
+					return GetCapabilities
+				}
+
+				if countGetTile > 0 {
+					return GetTile
+				}
+
+				if countGetFeatureInfo > 0 {
+					return GetFeatureInfo
+				}
+
+				return None
+			}
+			request = strings.ToLower(values[0])
+		}
+	}
+
+	switch request {
+	case string(GetTile):
+		return GetTile
+	case string(GetCapabilities):
+		return GetCapabilities
+	case string(GetFeatureInfo):
+		return GetFeatureInfo
+	default:
+		return None
+	}
+}
+
+// TODO
+// enable logging
+// determine what to do with getcapabilities request and getfeatureinfo request...
+// point those to 'default' end-point or ignore them...?
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -124,22 +190,31 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		missingParams := validateTileQuery(query)
-		var exception error = nil
-		if len(missingParams) == 0 {
-			var newPath string
-			newPath, exception = queryToPath(query)
-			r.URL.Path = buildNewPath(r.URL.Path, newPath)
-			r.URL.RawQuery = ""
-		} else if len(missingParams) < 6 {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
-			exception = errorXmlTemplate.Execute(w, missingParams)
-		}
-		if exception != nil {
+
+		switch getOperation(query) {
+		case GetTile:
+			missingParams := validateTileQuery(query)
+			var exception error = nil
+			if len(missingParams) == 0 {
+				var newPath string
+				newPath, exception = queryToPath(query)
+				r.URL.Path = buildNewPath(r.URL.Path, newPath)
+				r.URL.RawQuery = ""
+			} else if len(missingParams) < 6 {
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
+				exception = errorXmlTemplate.Execute(w, missingParams)
+			}
+			if exception != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+				w.Write([]byte(`{"status": "rewrite went wrong"}`))
+		case GetCapabilities:
+		case GetFeatureInfo:
+		case None: // Probably a MissingParameterValue Error
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.Write([]byte(`{"status": "rewrite went wrong"}`))
+			w.Write([]byte(`{"status": "Not an valid WMTS KVP request"}`))
 			return
 		}
 

@@ -182,3 +182,87 @@ func TestIncompleteTileQuery(t *testing.T) {
 		t.Errorf("Incomplete query was found complete.")
 	}
 }
+
+func TestGetTileOperation(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetTile"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetTile {
+		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
+	}
+}
+
+func TestMultipleRequestOperation(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetTile", "GetTile", "GetTile", "GetCapabilities", "GetTile", "GetTile", "GetTile", "GetFeatureInfo", "GetFeatureInfo"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetCapabilities {
+		t.Errorf("Instead of GetCapabilities, the found operation was: " + string(operation))
+	}
+}
+
+func TestGetFeatureInfoOperation(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetFeatureInfo"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetFeatureInfo {
+		t.Errorf("Instead of GetFeatureInfo, the found operation was: " + string(operation))
+	}
+}
+
+func TestMissingOperation(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != None {
+		t.Errorf("Instead of None, the found operation was: " + string(operation))
+	}
+}
+
+func TestMultipleOperationsGetCapabilities(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetFeatureInfo", "GetTile", "GetCapabilities"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetCapabilities {
+		t.Errorf("Instead of GetCapabilities, the found operation was: " + string(operation))
+	}
+}
+
+func TestMultipleOperationsGetTiles(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetFeatureInfo", "GetTile", "x"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetTile {
+		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
+	}
+}
+
+func TestMultipleOperationsGetFeatureInfo(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetFeatureInfo", "y", "x"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+	}
+
+	operation := getOperation(query)
+
+	if operation != GetFeatureInfo {
+		t.Errorf("Instead of GetFeatureInfo, the found operation was: " + string(operation))
+	}
+}
