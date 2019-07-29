@@ -38,13 +38,11 @@ func TestHappyFlow(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := tileQueryToPath(query)
+	newpath := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
 		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
-	} else if exception != nil {
-		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
 
@@ -59,13 +57,11 @@ func TestGWCTileMatrixIssue(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {gwctilematrixprefix + tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := tileQueryToPath(query)
+	newpath := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
 		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
-	} else if exception != nil {
-		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
 
@@ -80,13 +76,11 @@ func TestObscureGWCTileMatrixIssue(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {gwctilematrixprefix + tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := tileQueryToPath(query)
+	newpath := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
 		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
-	} else if exception != nil {
-		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
 
@@ -100,13 +94,11 @@ func TestImagePng8FormatMapping(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := tileQueryToPath(query)
+	newpath := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
 		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
-	} else if exception != nil {
-		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
 
@@ -120,13 +112,11 @@ func TestImageJpegFormatMapping(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := tileQueryToPath(query)
+	newpath := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".jpeg"
 
 	if newpath != expectednewpath {
 		t.Errorf("Request was incorrect, got: %s, want: %s.", newpath, expectednewpath)
-	} else if exception != nil {
-		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception, "nil")
 	}
 }
 

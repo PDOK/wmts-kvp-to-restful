@@ -83,8 +83,7 @@ func lowerQueryKeys(query url.Values) url.Values {
 	return newQuery
 }
 
-// TODO: exceptionhandling
-func tileQueryToPath(query url.Values) (path string, exception error) {
+func tileQueryToPath(query url.Values) (path string) {
 	var regex = regexp.MustCompile(`^.*:(.*)$`)
 
 	tilematrix := query["tilematrix"][0]
@@ -111,7 +110,7 @@ func tileQueryToPath(query url.Values) (path string, exception error) {
 		query["tilerow"][0] +
 		fileExtension
 
-	return path, nil
+	return path
 }
 
 func buildNewPath(urlPath, newQueryPath string) string {
@@ -185,10 +184,11 @@ func main() {
 		var exception error = nil
 		switch getOperation(query) {
 		case GetTile:
+			log.Println("converting wmts tile request to kvp")
 			missingParams := findMissingParams(query, TileStrings[:])
 			if len(missingParams) == 0 {
 				var newPath string
-				newPath, exception = tileQueryToPath(query)
+				newPath = tileQueryToPath(query)
 				r.URL.Path = buildNewPath(r.URL.Path, newPath)
 				r.URL.RawQuery = ""
 			} else if len(missingParams) < 6 {
@@ -198,6 +198,7 @@ func main() {
 				exception = errorXmlTemplate.Execute(w, errorMessage)
 			}
 		case GetCapabilities:
+			log.Println("converting wmts getCapabilities request to kvp")
 			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
 			// TODO: actually use the template syntax to fill in parameters.
 			// TODO: check the parameters
@@ -210,6 +211,7 @@ func main() {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			exception = errorXmlTemplate.Execute(w, "Not an valid WMTS KVP request")
+			log.Println("Invalid KVP request.")
 			return
 		}
 		if exception != nil {
