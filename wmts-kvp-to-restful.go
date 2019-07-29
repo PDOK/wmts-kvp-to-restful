@@ -8,9 +8,16 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"text/template"
 )
 
-func queryToPath(query map[string][]string) (path string, exception []byte) {
+var errorXMLTemplate = template.Must(
+	template.New("errorXml").
+		Funcs(template.FuncMap{"StringsJoin": strings.Join}).
+		ParseFiles("errorXml.xml"))
+
+func queryToPath(query map[string][]string) (path string, exception error) {
+	// todo: we know these are the 6 expected queryparams rewrite to simpeler function.
 	var layer, tilematrixset, tilematrix, tilecol, tilerow, format string
 
 	var regex = regexp.MustCompile(`^.*:(.*)$`)
@@ -64,19 +71,22 @@ func buildNewPath(urlPath, newQueryPath string) string {
 	return strings.TrimRight(urlPath, "/") + newQueryPath
 }
 
-func isValidTileQuery(query map[string][]string) bool {
-	for _, param := range [6]string{
+func validateTileQuery(query map[string][]string) []string {
+	tileParams := [6]string{
 		"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format",
-	} {
-		ok := false
+	}
+	var missingParams []string
+
+	for _, param := range tileParams {
+		paramInQuery := false
 		for key := range query {
-			ok = ok || (strings.ToLower(key) == param)
+			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
 		}
-		if !ok {
-			return false
+		if !paramInQuery {
+			missingParams = append(missingParams, param)
 		}
 	}
-	return true
+	return missingParams
 }
 
 func main() {
@@ -112,17 +122,23 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		if isValidTileQuery(query) {
-			newpath, exception := queryToPath(query)
-			if exception != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-				w.Write([]byte(`{"status": "rewrite went wrong"}`))
-				return
-			}
-			r.URL.Path = buildNewPath(r.URL.Path, newpath)
+		missingParams := validateTileQuery(query)
+		var exception error
+		if len(missingParams) == 0 {
+			var newPath string
+			newPath, exception = queryToPath(query)
+			r.URL.Path = buildNewPath(r.URL.Path, newPath)
 			r.URL.RawQuery = ""
+		} else if len(missingParams) < 6 {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
+			exception = errorXMLTemplate.Execute(w, missingParams)
+		}
+		if exception != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.Write([]byte(`{"status": "rewrite went wrong"}`))
+			return
 		}
 
 		proxy.ServeHTTP(w, r)
