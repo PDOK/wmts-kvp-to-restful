@@ -146,7 +146,7 @@ func getOperation(query url.Values) Operation {
 
 // TODO
 // enable logging
-// determine what to do with getcapabilities request and getfeatureinfo request...
+// determine what to do with getfeatureinfo request...
 // point those to 'default' end-point or ignore them...?
 func main() {
 
@@ -200,7 +200,6 @@ func main() {
 		case GetCapabilities:
 			log.Println("converting wmts getCapabilities request to kvp")
 			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
-			// TODO: actually use the template syntax to fill in parameters.
 			r.URL.Path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
 			r.URL.RawQuery = ""
 			exception = capabilitiesTemplate.Execute(w, string(r.URL.RawPath))
@@ -215,9 +214,9 @@ func main() {
 		}
 		if exception != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			// This is json because the error while parsing XML.
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			// TODO: this last possible error is unhandled:
-			errorXmlTemplate.Execute(w, "rewrite went wrong")
+			w.Write([]byte(`{"status": "Rewrite went wrong."}`))
 			return
 		}
 		proxy.ServeHTTP(w, r)
