@@ -121,6 +121,7 @@ func buildNewPath(urlPath, newQueryPath string) string {
 func findMissingParams(query url.Values, queryParams []string) []string {
 	var missingParams []string
 	for _, param := range queryParams {
+
 		paramInQuery := false
 		for key := range query {
 			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
@@ -216,6 +217,7 @@ func main() {
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 			// TODO: this last possible error is unhandled:
 			errorXmlTemplate.Execute(w, "rewrite went wrong")
+			return
 		}
 		proxy.ServeHTTP(w, r)
 		return
