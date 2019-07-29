@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -12,7 +11,7 @@ import (
 	"text/template"
 )
 
-var errorXmlTemplate = template.Must(
+var errorXMLTemplate = template.Must(
 	template.New("errorXml").
 		Funcs(template.FuncMap{"StringsJoin": strings.Join}).
 		ParseFiles("errorXml.xml"))
@@ -86,7 +85,6 @@ func validateTileQuery(query map[string][]string) []string {
 		if !paramInQuery {
 			missingParams = append(missingParams, param)
 		}
-		fmt.Println(paramInQuery, param, len(missingParams))
 	}
 	return missingParams
 }
@@ -125,7 +123,7 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
 		missingParams := validateTileQuery(query)
-		var exception error = nil
+		var exception error
 		if len(missingParams) == 0 {
 			var newPath string
 			newPath, exception = queryToPath(query)
@@ -134,7 +132,7 @@ func main() {
 		} else if len(missingParams) < 6 {
 			w.WriteHeader(http.StatusUnprocessableEntity)
 			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
-			exception = errorXmlTemplate.Execute(w, missingParams)
+			exception = errorXMLTemplate.Execute(w, missingParams)
 		}
 		if exception != nil {
 			w.WriteHeader(http.StatusInternalServerError)
