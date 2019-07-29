@@ -209,6 +209,7 @@ func main() {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 				w.Write([]byte(`{"status": "rewrite went wrong"}`))
+			}
 		case GetCapabilities:
 		case GetFeatureInfo:
 		case None: // Probably a MissingParameterValue Error
