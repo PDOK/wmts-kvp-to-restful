@@ -12,7 +12,7 @@
     <ows:Operation name="GetCapabilities">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="https://pdok.test.cloud.kadaster.nl/brtachtergrondkaart/wmts/v1_0?">
+          <ows:Get xlink:href="{{ . }}">
             <ows:Constraint name="GetEncoding">
               <ows:AllowedValues>
                 <ows:Value>KVP</ows:Value>
@@ -25,7 +25,7 @@
     <ows:Operation name="GetTile">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="https://pdok.test.cloud.kadaster.nl/brtachtergrondkaart/wmts/v1_0?">
+          <ows:Get xlink:href="{{ . }}?">
             <ows:Constraint name="GetEncoding">
               <ows:AllowedValues>
                 <ows:Value>KVP</ows:Value>
@@ -38,7 +38,7 @@
     <ows:Operation name="GetFeatureInfo">
       <ows:DCP>
         <ows:HTTP>
-          <ows:Get xlink:href="https://pdok.test.cloud.kadaster.nl/brtachtergrondkaart/wmts/v1_0?">
+          <ows:Get xlink:href="{{ . }}?">
             <ows:Constraint name="GetEncoding">
               <ows:AllowedValues>
                 <ows:Value>KVP</ows:Value>

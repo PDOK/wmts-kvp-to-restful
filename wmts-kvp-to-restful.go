@@ -201,10 +201,9 @@ func main() {
 			log.Println("converting wmts getCapabilities request to kvp")
 			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
 			// TODO: actually use the template syntax to fill in parameters.
-			// TODO: check the parameters
 			r.URL.Path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
 			r.URL.RawQuery = ""
-			exception = capabilitiesTemplate.Execute(w, nil)
+			exception = capabilitiesTemplate.Execute(w, string(r.URL.RawPath))
 		case GetFeatureInfo:
 			exception = errors.New("not implemented")
 		case None: // Probably a MissingParameterValue Error
