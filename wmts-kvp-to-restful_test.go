@@ -36,7 +36,7 @@ func TestHappyFlow(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := queryToPath(query)
+	newpath, exception := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
@@ -57,7 +57,7 @@ func TestGWCTileMatrixIssue(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {gwctilematrixprefix + tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := queryToPath(query)
+	newpath, exception := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
@@ -78,7 +78,7 @@ func TestObscureGWCTileMatrixIssue(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {gwctilematrixprefix + tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := queryToPath(query)
+	newpath, exception := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
@@ -98,7 +98,7 @@ func TestImagePng8FormatMapping(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := queryToPath(query)
+	newpath, exception := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".png"
 
 	if newpath != expectednewpath {
@@ -118,7 +118,7 @@ func TestImageJpegFormatMapping(t *testing.T) {
 
 	query := map[string][]string{"layer": {layer}, "tilematrixset": {tilematrixset}, "tilematrix": {tilematrix}, "tilecol": {tilecol}, "tilerow": {tilerow}, "format": {format}}
 
-	newpath, exception := queryToPath(query)
+	newpath, exception := tileQueryToPath(query)
 	expectednewpath := "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + ".jpeg"
 
 	if newpath != expectednewpath {
@@ -135,7 +135,7 @@ func TestCompleteTileQuery(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], validateTileQuery(query))
+	copy(result[:], findMissingParams(query, TileStrings[:]))
 
 	if result != expectedResult {
 		t.Errorf("Complete query was found incomplete.")
@@ -149,7 +149,7 @@ func TestTileQueryCaseInsensitive(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], validateTileQuery(query))
+	copy(result[:], findMissingParams(query, TileStrings[:]))
 
 	if result != expectedResult {
 		t.Errorf("Tile query check does not handle uppercase correctly.")
@@ -161,7 +161,7 @@ func TestNotATileQuery(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], validateTileQuery(query))
+	copy(result[:], findMissingParams(query, TileStrings[:]))
 
 	if result != expectedResult {
 		t.Errorf("Query was not a tile query but was identified as such.")
@@ -176,7 +176,7 @@ func TestIncompleteTileQuery(t *testing.T) {
 	expectedResult := [1]string{"tilerow"}
 
 	var result [1]string
-	copy(result[:], validateTileQuery(query))
+	copy(result[:], findMissingParams(query, TileStrings[:]))
 
 	if result != expectedResult {
 		t.Errorf("Incomplete query was found complete.")

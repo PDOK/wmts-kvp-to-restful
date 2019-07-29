@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -8,62 +9,107 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 )
 
+// Operation the constant type for the available WMTS Operations and an is ordered.
+type Operation int
+
+type OperationSlice []Operation
+
+// These make OperationSlice sortable
+func (o OperationSlice) Len() int           { return len(o) }
+func (o OperationSlice) Less(i, j int) bool { return o[i] < o[j] }
+func (o OperationSlice) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
+
+var TileStrings = [6]string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+
+// Const defining the available WMTS Operations
+// Maybe check if al the required KVP are available
+const (
+	GetCapabilities Operation = iota
+	GetTile
+	GetFeatureInfo
+	None
+)
+
+// String representation of each operation
+var operations = [...]string{
+	"getcapabilities",
+	"gettile",
+	"getfeatureinfo",
+	"none",
+}
+
+// String returns the English name of the operation.
+func (o Operation) String() string { return operations[o] }
+
+func operationFromString(s string) Operation {
+	switch strings.ToLower(s) {
+	case "getcapabilities":
+		return GetCapabilities
+	case "gettile":
+		return GetTile
+	case "getfeatureinfo":
+		return GetFeatureInfo
+	default:
+		return None
+	}
+}
+
+func operationFromStringSlice(a []string) OperationSlice {
+	var result = make(OperationSlice, len(a))
+	for i, v := range a {
+		result[i] = operationFromString(v)
+	}
+	return result
+}
+
 var errorXmlTemplate = template.Must(
 	template.New("errorXml").
-		Funcs(template.FuncMap{"StringsJoin": strings.Join}).
 		ParseFiles("errorXml.xml"))
 
-func queryToPath(query map[string][]string) (path string, exception error) {
-	// todo: we know these are the 6 expected queryparams rewrite to simpeler function.
-	var layer, tilematrixset, tilematrix, tilecol, tilerow, format string
+var capabilitiesTemplate = template.Must(
+	template.New("CapabilitiesXml").
+		ParseFiles("WMTSCapabilities.xml"))
 
+func lowerQueryKeys(query url.Values) url.Values {
+	newQuery := url.Values{}
+	for key, values := range query {
+		newQuery[strings.ToLower(key)] = values
+	}
+	return newQuery
+}
+
+// TODO: exceptionhandling
+func tileQueryToPath(query url.Values) (path string, exception error) {
 	var regex = regexp.MustCompile(`^.*:(.*)$`)
 
-	for key, value := range query {
-		value := value[0]
-
-		if strings.ToLower(key) == "layer" {
-			layer = value
-		}
-
-		if strings.ToLower(key) == "tilematrixset" {
-			tilematrixset = value
-		}
-
-		if strings.ToLower(key) == "tilematrix" {
-			groups := regex.FindAllStringSubmatch(value, -1)
-
-			if groups != nil {
-				tilematrix = groups[0][1]
-			} else {
-				tilematrix = value
-			}
-		}
-
-		if strings.ToLower(key) == "tilerow" {
-			tilerow = value
-		}
-
-		if strings.ToLower(key) == "tilecol" {
-			tilecol = value
-		}
-
-		if strings.ToLower(key) == "format" {
-			if value == "image/png8" {
-				format = ".png"
-			} else if value == "image/jpeg" {
-				format = ".jpeg"
-			} else {
-				format = ".png"
-			}
-		}
+	tilematrix := query["tilematrix"][0]
+	groups := regex.FindAllStringSubmatch(tilematrix, -1)
+	if groups != nil {
+		tilematrix = groups[0][1]
 	}
 
-	path = "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + format
+	var fileExtension string
+	switch query["format"][0] {
+	case "image/png8":
+		fileExtension = ".png"
+	case "image/jpeg":
+		fileExtension = ".jpeg"
+	default:
+		fileExtension = ".png"
+	}
+
+	path = "/" +
+		query["layer"][0] + "/" +
+		query["tilematrixset"][0] + "/" +
+		tilematrix + "/" +
+		query["tilecol"][0] + "/" +
+		query["tilerow"][0] +
+		fileExtension
 
 	return path, nil
 }
@@ -72,13 +118,9 @@ func buildNewPath(urlPath, newQueryPath string) string {
 	return strings.TrimRight(urlPath, "/") + newQueryPath
 }
 
-func validateTileQuery(query map[string][]string) []string {
-	tileParams := [6]string{
-		"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format",
-	}
+func findMissingParams(query url.Values, queryParams []string) []string {
 	var missingParams []string
-
-	for _, param := range tileParams {
+	for _, param := range queryParams {
 		paramInQuery := false
 		for key := range query {
 			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
@@ -91,66 +133,15 @@ func validateTileQuery(query map[string][]string) []string {
 	return missingParams
 }
 
-// Operation is the constant type for the available WMTS Operations
-type Operation string
-
-// Const defining the available WMTS Operations
-// Maybe check if al the required KVP are available
-const (
-	GetCapabilities Operation = "getcapabilities"
-	GetTile         Operation = "gettile"
-	GetFeatureInfo  Operation = "getfeatureinfo"
-	None            Operation = "none"
-)
-
 // prio in order: GetCapabilities, GetTiles, GetFeatureInfo
-func getOperation(query map[string][]string) Operation {
-	var request string
-	for key, values := range query {
-		if strings.ToLower(key) == "request" {
-			if len(values) > 1 {
-				var countGetCapabilites, countGetTile, countGetFeatureInfo int
-
-				for _, value := range values {
-
-					switch strings.ToLower(value) {
-					case string(GetCapabilities):
-						countGetCapabilites = countGetCapabilites + 1
-					case string(GetTile):
-						countGetTile = countGetTile + 1
-					case string(GetFeatureInfo):
-						countGetFeatureInfo = countGetFeatureInfo + 1
-					}
-				}
-
-				if countGetCapabilites > 0 {
-					return GetCapabilities
-				}
-
-				if countGetTile > 0 {
-					return GetTile
-				}
-
-				if countGetFeatureInfo > 0 {
-					return GetFeatureInfo
-				}
-
-				return None
-			}
-			request = strings.ToLower(values[0])
-		}
-	}
-
-	switch request {
-	case string(GetTile):
-		return GetTile
-	case string(GetCapabilities):
-		return GetCapabilities
-	case string(GetFeatureInfo):
-		return GetFeatureInfo
-	default:
+func getOperation(query url.Values) Operation {
+	request := query["request"]
+	if request == nil {
 		return None
 	}
+	requestTypes := operationFromStringSlice(request[:])
+	sort.Sort(requestTypes)
+	return requestTypes[0]
 }
 
 // TODO
@@ -189,36 +180,43 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-
+		query := lowerQueryKeys(r.URL.Query())
+		var exception error = nil
 		switch getOperation(query) {
 		case GetTile:
-			missingParams := validateTileQuery(query)
-			var exception error = nil
+			missingParams := findMissingParams(query, TileStrings[:])
 			if len(missingParams) == 0 {
 				var newPath string
-				newPath, exception = queryToPath(query)
+				newPath, exception = tileQueryToPath(query)
 				r.URL.Path = buildNewPath(r.URL.Path, newPath)
 				r.URL.RawQuery = ""
 			} else if len(missingParams) < 6 {
 				w.WriteHeader(http.StatusUnprocessableEntity)
 				w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
-				exception = errorXmlTemplate.Execute(w, missingParams)
-			}
-			if exception != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-				w.Write([]byte(`{"status": "rewrite went wrong"}`))
+				errorMessage := "missing parameters " + strings.Join(missingParams, ",")
+				exception = errorXmlTemplate.Execute(w, errorMessage)
 			}
 		case GetCapabilities:
+			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
+			// TODO: actually use the template syntax to fill in parameters.
+			// TODO: check the parameters
+			r.URL.Path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
+			r.URL.RawQuery = ""
+			exception = capabilitiesTemplate.Execute(w, nil)
 		case GetFeatureInfo:
+			exception = errors.New("not implemented")
 		case None: // Probably a MissingParameterValue Error
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.Write([]byte(`{"status": "Not an valid WMTS KVP request"}`))
+			exception = errorXmlTemplate.Execute(w, "Not an valid WMTS KVP request")
 			return
 		}
-
+		if exception != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			// TODO: this last possible error is unhandled:
+			errorXmlTemplate.Execute(w, "rewrite went wrong")
+		}
 		proxy.ServeHTTP(w, r)
 		return
 	})

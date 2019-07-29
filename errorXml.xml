@@ -4,6 +4,6 @@
                      xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd"
                      version="1.0.0" xml:lang="en">
     <ows:Exception exceptionCode="NoApplicableCode">
-        <ows:ExceptionText>missing parameters [{{ StringsJoin .missingParams }}]</ows:ExceptionText>
+        <ows:ExceptionText>{{ .errorMessage }}</ows:ExceptionText>
     </ows:Exception>
 </ows:ExceptionReport>
