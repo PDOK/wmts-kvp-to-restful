@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -264,5 +266,31 @@ func TestMultipleOperationsGetFeatureInfo(t *testing.T) {
 
 	if operation != GetFeatureInfo {
 		t.Errorf("Instead of GetFeatureInfo, the found operation was: " + string(operation))
+	}
+}
+
+func TestLowerQueryKeys(t *testing.T) {
+	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
+	expectedQuery := url.Values{"request": {"GetFeatureInfo", "y", "x"}, "layer": {"a"}}
+
+	resultQuery := lowerQueryKeys(query)
+	if !reflect.DeepEqual(expectedQuery, resultQuery) {
+		t.Errorf("Query keys were not lowercased.")
+	}
+}
+
+func TestOperationFromStringSlice(t *testing.T) {
+	operations := []string{"getfeatureinfo", "getfeatureinfo", "gettile"}
+	expected := OperationSlice{GetFeatureInfo, GetFeatureInfo, GetTile}
+	result := operationFromStringSlice(operations)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf(`String slice {"getfeatureinfo", "getfeatureinfo", "gettile",} was not converted to OperationSlice{GetFeatureInfo, GetFeatureInfo, GetTile}.`)
+	}
+}
+
+func TestOperationFromString(t *testing.T) {
+	result := operationFromString("getfeatureinfo")
+	if result != GetFeatureInfo {
+		t.Errorf(`String "getfeatureinfo" was not converted to Operation GetFeatureInfo. Instead we got: ` + string(result))
 	}
 }
