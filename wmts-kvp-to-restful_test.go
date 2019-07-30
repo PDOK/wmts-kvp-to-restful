@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"net/http"
 	"net/url"
 	"reflect"
 	"testing"
@@ -17,7 +19,7 @@ func TestNormalPath(t *testing.T) {
 	}
 }
 
-func TestPathWithTrailingSlashs(t *testing.T) {
+func TestPathWithTrailingSlashes(t *testing.T) {
 	partone := "part/one////"
 	parttwo := "/part/two"
 	newpath := buildNewPath(partone, parttwo)
@@ -180,10 +182,12 @@ func TestGetTileOperation(t *testing.T) {
 		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetTile"},
 	}
 
-	operation := getOperation(query)
+	operation, exception := getOperation(query)
 
 	if operation != GetTile {
 		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
+	} else if exception != nil {
+		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
 	}
 }
 
@@ -191,11 +195,21 @@ func TestMultipleRequestOperation(t *testing.T) {
 	query := map[string][]string{
 		"request": {"GetTile", "GetTile", "GetTile", "GetCapabilities", "GetTile", "GetTile", "GetTile", "GetFeatureInfo", "GetFeatureInfo"},
 	}
+	operation, _ := getOperation(query)
+	if operation != None {
+		t.Errorf("Instead of None, the found operation was: " + string(operation))
+	}
+}
 
-	operation := getOperation(query)
-
-	if operation != GetCapabilities {
-		t.Errorf("Instead of GetCapabilities, the found operation was: " + string(operation))
+func TestMultipleRequestOperationException(t *testing.T) {
+	query := map[string][]string{
+		"request": {"GetTile", "GetTile", "GetTile", "GetCapabilities", "GetTile", "GetTile", "GetTile", "GetFeatureInfo", "GetFeatureInfo"},
+	}
+	_, exception := getOperation(query)
+	if exception == nil {
+		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
+	} else if exception.Error() != "invalid number of request values" {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "invalid number of request values")
 	}
 }
 
@@ -204,10 +218,22 @@ func TestGetFeatureInfoOperation(t *testing.T) {
 		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetFeatureInfo"},
 	}
 
-	operation := getOperation(query)
+	operation, _ := getOperation(query)
 
 	if operation != GetFeatureInfo {
 		t.Errorf("Instead of GetFeatureInfo, the found operation was: " + string(operation))
+	}
+}
+
+func TestGetFeatureInfoOperationException(t *testing.T) {
+	query := map[string][]string{
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"}, "request": {"GetFeatureInfo"},
+	}
+
+	_, exception := getOperation(query)
+
+	if exception != nil {
+		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
 	}
 }
 
@@ -216,65 +242,61 @@ func TestMissingOperation(t *testing.T) {
 		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
 	}
 
-	operation := getOperation(query)
+	operation, _ := getOperation(query)
 
 	if operation != None {
 		t.Errorf("Instead of None, the found operation was: " + string(operation))
 	}
 }
 
-func TestMultipleOperationsGetCapabilities(t *testing.T) {
+func TestMissingOperationException(t *testing.T) {
 	query := map[string][]string{
-		"request": {"GetFeatureInfo", "GetTile", "GetCapabilities"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
+		"layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
 	}
 
-	operation := getOperation(query)
+	_, exception := getOperation(query)
 
-	if operation != GetCapabilities {
-		t.Errorf("Instead of GetCapabilities, the found operation was: " + string(operation))
+	if exception == nil {
+		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
+	} else if exception.Error() != "invalid number of request values" {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "invalid number of request values")
 	}
 }
+func TestFormatQuery(t *testing.T) {
+	query := url.Values{"REQUEST": {"GetFeatureInfo"}, "LAYER": {"a"}}
+	expectedQuery := url.Values{"request": {"GetFeatureInfo"}, "layer": {"a"}}
 
-func TestMultipleOperationsGetTiles(t *testing.T) {
-	query := map[string][]string{
-		"request": {"GetFeatureInfo", "GetTile", "x"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
-	}
-
-	operation := getOperation(query)
-
-	if operation != GetTile {
-		t.Errorf("Instead of GetTile, the found operation was: " + string(operation))
-	}
-}
-
-func TestMultipleOperationsGetFeatureInfo(t *testing.T) {
-	query := map[string][]string{
-		"request": {"GetFeatureInfo", "y", "x"}, "layer": {"a"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"d"}, "format": {"f"},
-	}
-
-	operation := getOperation(query)
-
-	if operation != GetFeatureInfo {
-		t.Errorf("Instead of GetFeatureInfo, the found operation was: " + string(operation))
-	}
-}
-
-func TestLowerQueryKeys(t *testing.T) {
-	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
-	expectedQuery := url.Values{"request": {"GetFeatureInfo", "y", "x"}, "layer": {"a"}}
-
-	resultQuery := lowerQueryKeys(query)
+	resultQuery, _ := formatQuery(query)
 	if !reflect.DeepEqual(expectedQuery, resultQuery) {
 		t.Errorf("Query keys were not lowercased.")
 	}
 }
 
-func TestOperationFromStringSlice(t *testing.T) {
-	operations := []string{"getfeatureinfo", "getfeatureinfo", "gettile"}
-	expected := OperationSlice{GetFeatureInfo, GetFeatureInfo, GetTile}
-	result := operationFromStringSlice(operations)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf(`String slice {"getfeatureinfo", "getfeatureinfo", "gettile",} was not converted to OperationSlice{GetFeatureInfo, GetFeatureInfo, GetTile}.`)
+func TestFormatQueryException(t *testing.T) {
+	query := url.Values{"REQUEST": {"GetFeatureInfo"}, "LAYER": {"a"}}
+	_, exception := formatQuery(query)
+	if exception != nil {
+		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
+	}
+}
+
+func TestFormatQueryRaisesErrorOnMultipleRequestValues(t *testing.T) {
+	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
+
+	resultQuery, _ := formatQuery(query)
+	if resultQuery != nil {
+		t.Errorf("With erroneous input result query should be nil.")
+	}
+}
+
+func TestFormatQueryRaisesErrorOnMultipleRequestValuesException(t *testing.T) {
+	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
+
+	_, exception := formatQuery(query)
+	if exception == nil {
+		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
+	} else if exception.Error() != "multiple query values found" {
+		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
 	}
 }
 
@@ -282,5 +304,132 @@ func TestOperationFromString(t *testing.T) {
 	result := operationFromString("getfeatureinfo")
 	if result != GetFeatureInfo {
 		t.Errorf(`String "getfeatureinfo" was not converted to Operation GetFeatureInfo. Instead we got: ` + string(result))
+	}
+}
+
+// --------- HandleOperation tests --------------------
+var mockRequest = &http.Request{
+	Method:     "GET",
+	Host:       "example.com",
+	URL:        &url.URL{Path: "http://test/"},
+	Header:     http.Header{},
+	Proto:      "HTTP/1.1",
+	ProtoMajor: 1,
+	ProtoMinor: 1,
+	RemoteAddr: "192.0.2.1:1234",
+	RequestURI: "/test/",
+}
+
+func TestHandleOperationIncomingError(t *testing.T) {
+	// handleOperation
+	var incomingException error = errors.New("test")
+	_, _, _, _, exception := handleOperation(url.Values{}, mockRequest, incomingException)
+
+	if exception != incomingException {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "test")
+	}
+}
+
+func TestHandleOperationIncomingErrorContentType(t *testing.T) {
+	// handleOperation
+	var incomingException error = errors.New("test")
+	var expectedContentType = "application/xml; charset=UTF-8"
+	_, _, contentType, _, _ := handleOperation(url.Values{}, mockRequest, incomingException)
+	if contentType != expectedContentType {
+		t.Errorf("Contenttype was incorrect, got: %s, want: %s.", contentType, expectedContentType)
+	}
+}
+
+func TestHandleOperationIncomingErrorStatusCode(t *testing.T) {
+	// handleOperation
+	var incomingException error = errors.New("test")
+	statusCode, _, _, _, _ := handleOperation(url.Values{}, mockRequest, incomingException)
+	if statusCode != http.StatusBadRequest {
+		t.Errorf("With error response statusCode should be %d found %d", http.StatusBadRequest, statusCode)
+	}
+}
+
+func TestHandleOperationNoOperationError(t *testing.T) {
+	// handleOperation
+	_, _, _, _, exception := handleOperation(url.Values{}, mockRequest, nil)
+	expectedErrormessage := "invalid number of request values"
+
+	if exception.Error() != expectedErrormessage {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), expectedErrormessage)
+	}
+}
+
+func TestHandleOperationNoOperationErrorContentType(t *testing.T) {
+	// handleOperation
+	var expectedContentType = "application/xml; charset=UTF-8"
+	_, _, contentType, _, _ := handleOperation(url.Values{}, mockRequest, nil)
+	if contentType != expectedContentType {
+		t.Errorf("Contenttype was incorrect, got: %s, want: %s.", contentType, expectedContentType)
+	}
+}
+
+func TestHandleOperationNoOperationErrorStatusCode(t *testing.T) {
+	// handleOperation
+	statusCode, _, _, _, _ := handleOperation(url.Values{}, mockRequest, nil)
+	if statusCode != http.StatusBadRequest {
+		t.Errorf("With error response statusCode should be %d found %d", http.StatusBadRequest, statusCode)
+	}
+}
+
+func TestHandleOperationGetTileStatusCode(t *testing.T) {
+	// handleOperation
+	var query = url.Values{
+		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
+		"format": {"image/jpeg"}, "request": {"GetTile"}}
+	statusCode, _, _, _, _ := handleOperation(query, mockRequest, nil)
+	if statusCode != http.StatusOK {
+		t.Errorf("With default response statusCode should be %d found %d", http.StatusOK, statusCode)
+	}
+}
+
+func TestHandleOperationGetTileContentType(t *testing.T) {
+	// handleOperation
+	var query = url.Values{
+		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
+		"format": {"image/jpeg"}, "request": {"GetTile"}}
+	var expectedContentType = ""
+	_, _, contentType, _, _ := handleOperation(query, mockRequest, nil)
+	if contentType != expectedContentType {
+		t.Errorf("Contenttype was incorrect, got: %s, want: %s.", contentType, expectedContentType)
+	}
+}
+
+func TestHandleOperationGetCapabilitiesUrl(t *testing.T) {
+	// handleOperation
+	var query = url.Values{
+		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
+		"format": {"image/jpeg"}, "request": {"GetCapabilities"}}
+	var expectedUrl = "http://test/v1_0/WMTSCapabilities.xml"
+	_, path, _, _, _ := handleOperation(query, mockRequest, nil)
+	if path != expectedUrl {
+		t.Errorf("GetCapabilities url was incorrect, got: %s, want: %s.", path, expectedUrl)
+	}
+}
+
+func TestHandleOperationGetCapabilitiesException(t *testing.T) {
+	// handleOperation
+	var query = url.Values{
+		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
+		"format": {"image/jpeg"}, "request": {"GetCapabilities"}}
+	_, _, _, _, exception := handleOperation(query, mockRequest, nil)
+
+	if exception != nil {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "nil")
+	}
+}
+
+func TestHandleOperationGetCapabilitiesStatusCode(t *testing.T) {
+	// handleOperation
+	var query = url.Values{
+		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
+		"format": {"image/jpeg"}, "request": {"GetCapabilities"}}
+	statusCode, _, _, _, _ := handleOperation(query, mockRequest, nil)
+	if statusCode != http.StatusOK {
+		t.Errorf("With default response statusCode should be %d found %d", http.StatusOK, statusCode)
 	}
 }
