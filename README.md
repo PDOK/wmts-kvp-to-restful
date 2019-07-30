@@ -27,7 +27,7 @@ A request that cannot be rewriten is passed through unhandled.
 
 The WMTS-KVP-to-RESTful proxy will try to solve the issue with Geowebcache WMTS KVP generated requests. The issue is that the tilematrix values generated contain the tilematrixset as a prefix. This something that doesn't match well with a WMTS RESTful request. This is a issue that some are [experiencing](https://geoforum.nl/t/wmts-tilematrix-parameter-maakt-request-ongelding/2928) and that we ourself have experienced, especially when services are migrated from Geowebcache to a new WMTS server (like mapproxy).
 
-A invalid WMTS RESTful path would be generate, the WMTS KVP request:
+An invalid WMTS RESTful path would generate, the WMTS KVP request:
 
 ```http
 /ws/raadpleegdiensten/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=grb_bsk_grijs&STYLE=&TILEMATRIXSET=BPL72VL&TILEMATRIX=BPL72VL:11&TILEROW=1072&TILECOL=730&FORMAT=image/png
@@ -63,10 +63,14 @@ go run wmts-kvp-to-restful.go -host=https://geodata.nationaalgeoregister.nl
 go build wmts-kvp-to-restful.go
 ```
 
+## configuration
+Needs a `WMTSCapabilities.xml`-file in the docker container at the `/srv/wmts-kvp-to-restful/WMTSCapabilities.xml` location. The docker-example below achieves this through a mount.
+An example of this `WMTSCapabilities.xml`-file can be found in the project root. Use `{{ . }}` to insert the kvp styled getcapabilities url in the document.     
+
 ## docker
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run --name wmts-ktr -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl
-docker stop wmts-ktr && docker rm wmts-ktr
+docker run --rm -v $PWD:/srv/wmts-kvp-to-restful/data/ --name wmts-ktr -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl
+docker stop wmts-ktr
 ```

@@ -40,19 +40,19 @@ func operationFromString(s string) Operation {
 }
 
 var errorXmlTemplate = template.Must(
-	template.New("errorXml").
+	template.New("errorXml.xml").
 		ParseFiles("/srv/wmts-kvp-to-restful/errorXml.xml"))
 
 var capabilitiesTemplate = template.Must(
-	template.New("CapabilitiesXml").
-		ParseFiles("/srv/wmts-kvp-to-restful/WMTSCapabilities.xml"))
+	template.New("WMTSCapabilities.xml").
+		ParseFiles("/srv/wmts-kvp-to-restful/data/WMTSCapabilities.xml"))
 
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
 	for key, values := range query {
 		if len(values) != 1 {
 			if key != "sections" {
-				return nil, errors.New("multiple query values found")
+				return nil, errors.New("Multiple query values found.")
 			}
 		}
 		newQuery[strings.ToLower(key)] = values
@@ -113,7 +113,7 @@ func findMissingParams(query url.Values, queryParams []string) []string {
 func getOperation(query url.Values) (operation Operation, exception error) {
 	request := query["request"]
 	if len(request) != 1 {
-		return None, errors.New("invalid number of request values")
+		return None, errors.New("Invalid number of request values.")
 	}
 	return operationFromString(request[0]), nil
 }
@@ -133,7 +133,7 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 		}
 		switch operation {
 		case GetTile:
-			log.Println("converting wmts tile request to kvp")
+			log.Println("Converting wmts tile request to kvp.")
 			missingParams := findMissingParams(query, TileStrings[:])
 			if len(missingParams) == 0 {
 				statusCode = http.StatusOK
@@ -141,21 +141,21 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 			} else {
 				statusCode = http.StatusBadRequest
 				contentType = "application/xml; charset=UTF-8"
-				exception = errors.New("missing parameters " + strings.Join(missingParams, ","))
+				exception = errors.New("Missing parameters: '" + strings.Join(missingParams, "', '") + "'.")
 			}
 		case GetCapabilities:
-			log.Println("converting wmts getCapabilities request to kvp")
+			log.Println("Converting wmts getCapabilities request to kvp.")
 			statusCode = http.StatusOK
 			contentType = "application/xml; charset=UTF-8"
 			path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
 		case GetFeatureInfo:
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("GetFeatureInfo not implemented")
+			exception = errors.New("GetFeatureInfo not implemented.")
 		case None: // Probably a MissingParameterValue Error
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("Not an valid WMTS KVP request")
+			exception = errors.New("Not an valid WMTS KVP request.")
 		}
 	}
 	return statusCode, path, contentType, operation, exception
