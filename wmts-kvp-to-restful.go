@@ -41,11 +41,11 @@ func operationFromString(s string) Operation {
 
 var errorXmlTemplate = template.Must(
 	template.New("errorXml").
-		ParseFiles("errorXml.xml"))
+		ParseFiles("/srv/wmts-kvp-to-restful/errorXml.xml"))
 
 var capabilitiesTemplate = template.Must(
 	template.New("CapabilitiesXml").
-		ParseFiles("WMTSCapabilities.xml"))
+		ParseFiles("/srv/wmts-kvp-to-restful/WMTSCapabilities.xml"))
 
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
@@ -151,7 +151,7 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 		case GetFeatureInfo:
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("not implemented")
+			exception = errors.New("GetFeatureInfo not implemented")
 		case None: // Probably a MissingParameterValue Error
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
