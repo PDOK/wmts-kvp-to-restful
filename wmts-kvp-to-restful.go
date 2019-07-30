@@ -41,11 +41,7 @@ func operationFromString(s string) Operation {
 
 var errorXmlTemplate = template.Must(
 	template.New("errorXml.xml").
-		ParseFiles("/srv/wmts-kvp-to-restful/errorXml.xml"))
-
-var capabilitiesTemplate = template.Must(
-	template.New("WMTSCapabilities.xml").
-		ParseFiles("/srv/wmts-kvp-to-restful/data/WMTSCapabilities.xml"))
+		Parse(errorXml))
 
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
@@ -58,6 +54,13 @@ func formatQuery(query url.Values) (url.Values, error) {
 		newQuery[strings.ToLower(key)] = values
 	}
 	return newQuery, nil
+}
+
+func getCapabilitiesTemplate(path string) *template.Template {
+	var capabilitiesTemplate = template.Must(
+		template.New("WMTSCapabilities.xml").
+			ParseFiles(path))
+	return capabilitiesTemplate
 }
 
 func tileQueryToPath(query url.Values) (path string) {
@@ -168,6 +171,7 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
+	capabilitiesfile := flag.String("capabilitiesfile", "WMTSCapabilities.xml", "Optional GetCapabilities template file, if not set request will be proxied.")
 
 	flag.Parse()
 
@@ -216,8 +220,8 @@ func main() {
 
 		if exception != nil {
 			xmlparseException = errorXmlTemplate.Execute(w, exception.Error())
-		} else if operation == GetCapabilities {
-			xmlparseException = capabilitiesTemplate.Execute(w, path)
+		} else if operation == GetCapabilities && *capabilitiesfile != "" {
+			xmlparseException = getCapabilitiesTemplate(*capabilitiesfile).Execute(w, path)
 		}
 
 		if xmlparseException != nil {
