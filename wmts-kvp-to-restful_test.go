@@ -208,8 +208,8 @@ func TestMultipleRequestOperationException(t *testing.T) {
 	_, exception := getOperation(query)
 	if exception == nil {
 		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
-	} else if exception.Error() != "invalid number of request values" {
-		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "invalid number of request values")
+	} else if exception.Error() != ExInvalidRequestValues {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), ExInvalidRequestValues)
 	}
 }
 
@@ -258,8 +258,8 @@ func TestMissingOperationException(t *testing.T) {
 
 	if exception == nil {
 		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
-	} else if exception.Error() != "invalid number of request values" {
-		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), "invalid number of request values")
+	} else if exception.Error() != ExInvalidRequestValues {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), ExInvalidRequestValues)
 	}
 }
 func TestFormatQuery(t *testing.T) {
@@ -294,8 +294,8 @@ func TestFormatQueryRaisesErrorOnMultipleRequestValuesException(t *testing.T) {
 
 	_, exception := formatQuery(query)
 	if exception == nil {
-		t.Errorf(`Exception was incorrect, got: nil, want: "multiple query values found".`)
-	} else if exception.Error() != "multiple query values found" {
+		t.Errorf(`Exception was incorrect, got: nil, want: %s.`, ExMultipleValuesFound)
+	} else if exception.Error() != ExMultipleValuesFound {
 		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
 	}
 }
@@ -352,10 +352,9 @@ func TestHandleOperationIncomingErrorStatusCode(t *testing.T) {
 func TestHandleOperationNoOperationError(t *testing.T) {
 	// handleOperation
 	_, _, _, _, exception := handleOperation(url.Values{}, mockRequest, nil)
-	expectedErrormessage := "invalid number of request values"
 
-	if exception.Error() != expectedErrormessage {
-		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), expectedErrormessage)
+	if exception.Error() != ExInvalidRequestValues {
+		t.Errorf(`Exception was incorrect, got: %s, want: %s.`, exception.Error(), ExInvalidRequestValues)
 	}
 }
 

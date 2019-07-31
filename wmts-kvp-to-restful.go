@@ -48,7 +48,7 @@ func formatQuery(query url.Values) (url.Values, error) {
 	for key, values := range query {
 		if len(values) != 1 {
 			if key != "sections" {
-				return nil, errors.New("Multiple query values found.")
+				return nil, errors.New(ExMultipleValuesFound)
 			}
 		}
 		newQuery[strings.ToLower(key)] = values
@@ -112,11 +112,17 @@ func findMissingParams(query url.Values, queryParams []string) []string {
 	return missingParams
 }
 
+// ExInvalidRequestValues is ExInvalidRequestValues
+const ExInvalidRequestValues string = "Invalid number of request values"
+
+// ExMultipleValuesFound is ExMultipleValuesFound
+const ExMultipleValuesFound string = "Multiple query values found"
+
 // prio in order: GetCapabilities, GetTiles, GetFeatureInfo
 func getOperation(query url.Values) (operation Operation, exception error) {
 	request := query["request"]
 	if len(request) != 1 {
-		return None, errors.New("Invalid number of request values.")
+		return None, errors.New(ExInvalidRequestValues)
 	}
 	return operationFromString(request[0]), nil
 }
