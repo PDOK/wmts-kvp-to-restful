@@ -42,17 +42,13 @@ func operationFromString(s string) Operation {
 	}
 }
 
-var errorXMLTemplate = template.Must(
-	template.New("errorXML.xml").
-		Parse(errorXML))
+var errorXMLTemplate = template.Must(template.New("errorXML.xml").Parse(errorXML))
 
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
 	for key, values := range query {
 		if len(values) != 1 {
-			if key != "sections" {
-				return nil, errors.New(ExMultipleValuesFound)
-			}
+			return nil, errors.New(ExMultipleValuesFound)
 		}
 		newQuery[strings.ToLower(key)] = values
 	}
@@ -175,6 +171,12 @@ type HostAndPath struct {
 	Protocol string
 	Host     string
 	Path     string
+}
+
+// ExceptionCodeAndMessage is ExceptionCodeAndMessage
+type ExceptionCodeAndMessage struct {
+	ExceptionCode string
+	Message       string
 }
 
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
