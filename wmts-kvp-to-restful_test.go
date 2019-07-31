@@ -129,7 +129,7 @@ func TestCompleteTileQuery(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], findMissingParams(query, TileStrings[:]))
+	copy(result[:], findMissingParams(query, GetTileKeys[:]))
 
 	if result != expectedResult {
 		t.Errorf("Complete query was found incomplete.")
@@ -143,7 +143,7 @@ func TestTileQueryCaseInsensitive(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], findMissingParams(query, TileStrings[:]))
+	copy(result[:], findMissingParams(query, GetTileKeys[:]))
 
 	if result != expectedResult {
 		t.Errorf("Tile query check does not handle uppercase correctly.")
@@ -155,7 +155,7 @@ func TestNotATileQuery(t *testing.T) {
 
 	expectedResult := [0]string{}
 	var result [0]string
-	copy(result[:], findMissingParams(query, TileStrings[:]))
+	copy(result[:], findMissingParams(query, GetTileKeys[:]))
 
 	if result != expectedResult {
 		t.Errorf("Query was not a tile query but was identified as such.")
@@ -170,7 +170,7 @@ func TestIncompleteTileQuery(t *testing.T) {
 	expectedResult := [1]string{"tilerow"}
 
 	var result [1]string
-	copy(result[:], findMissingParams(query, TileStrings[:]))
+	copy(result[:], findMissingParams(query, GetTileKeys[:]))
 
 	if result != expectedResult {
 		t.Errorf("Incomplete query was found complete.")
@@ -322,7 +322,7 @@ var mockRequest = &http.Request{
 
 func TestHandleOperationIncomingError(t *testing.T) {
 	// handleOperation
-	var incomingException error = errors.New("test")
+	incomingException := errors.New("test")
 	_, _, _, _, exception := handleOperation(url.Values{}, mockRequest, incomingException)
 
 	if exception != incomingException {
@@ -332,7 +332,7 @@ func TestHandleOperationIncomingError(t *testing.T) {
 
 func TestHandleOperationIncomingErrorContentType(t *testing.T) {
 	// handleOperation
-	var incomingException error = errors.New("test")
+	incomingException := errors.New("test")
 	var expectedContentType = "application/xml; charset=UTF-8"
 	_, _, contentType, _, _ := handleOperation(url.Values{}, mockRequest, incomingException)
 	if contentType != expectedContentType {
@@ -342,7 +342,7 @@ func TestHandleOperationIncomingErrorContentType(t *testing.T) {
 
 func TestHandleOperationIncomingErrorStatusCode(t *testing.T) {
 	// handleOperation
-	var incomingException error = errors.New("test")
+	incomingException := errors.New("test")
 	statusCode, _, _, _, _ := handleOperation(url.Values{}, mockRequest, incomingException)
 	if statusCode != http.StatusBadRequest {
 		t.Errorf("With error response statusCode should be %d found %d", http.StatusBadRequest, statusCode)
@@ -403,10 +403,10 @@ func TestHandleOperationGetCapabilitiesUrl(t *testing.T) {
 	var query = url.Values{
 		"layer": {"brta"}, "tilematrixset": {"b"}, "tilematrix": {"c"}, "tilecol": {"1"}, "tilerow": {"1"},
 		"format": {"image/jpeg"}, "request": {"GetCapabilities"}}
-	var expectedUrl = "http://test/v1_0/WMTSCapabilities.xml"
+	expectedURL := "http://test/v1_0/WMTSCapabilities.xml"
 	_, path, _, _, _ := handleOperation(query, mockRequest, nil)
-	if path != expectedUrl {
-		t.Errorf("GetCapabilities url was incorrect, got: %s, want: %s.", path, expectedUrl)
+	if path != expectedURL {
+		t.Errorf("GetCapabilities url was incorrect, got: %s, want: %s.", path, expectedURL)
 	}
 }
 

@@ -23,5 +23,4 @@ FROM scratch as service
 WORKDIR /
 ENV PATH=/
 
-COPY errorXml.xml /srv/wmts-kvp-to-restful/errorXml.xml
 COPY --from=build-env /wmts-kvp-to-restful /

@@ -15,7 +15,8 @@ import (
 // Operation the constant type for the available WMTS Operations and an is ordered.
 type Operation string
 
-var TileStrings = [6]string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+// GetTileKeys containing the manditory query keys
+var GetTileKeys = [6]string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 
 // Const defining the available WMTS Operations
 // Maybe check if al the required KVP are available
@@ -143,7 +144,7 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 		switch operation {
 		case GetTile:
 			log.Println("Converting wmts tile request to kvp.")
-			missingParams := findMissingParams(query, TileStrings[:])
+			missingParams := findMissingParams(query, GetTileKeys[:])
 			if len(missingParams) == 0 {
 				statusCode = http.StatusOK
 				path = buildNewPath(r.URL.Path, tileQueryToPath(query))
@@ -160,11 +161,11 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 		case GetFeatureInfo:
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("GetFeatureInfo not implemented.")
+			exception = errors.New("GetFeatureInfo not implemented")
 		case None: // Probably a MissingParameterValue Error
 			statusCode = http.StatusInternalServerError
 			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("Not an valid WMTS KVP request.")
+			exception = errors.New("Not an valid WMTS KVP request")
 		}
 	}
 	return statusCode, path, contentType, operation, exception
