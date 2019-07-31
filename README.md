@@ -71,7 +71,7 @@ WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo re
 -t=./path/to/template/WMTSCapabilities.template.xml
 ```
 
-An example of this tempalte can be found in the example dir.
+An example of this template can be found in the example dir.
 
 ## docker
 
