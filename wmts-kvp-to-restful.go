@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
@@ -59,8 +61,7 @@ func formatQuery(query url.Values) (url.Values, error) {
 
 func getCapabilitiesTemplate(path string) *template.Template {
 	var capabilitiesTemplate = template.Must(
-		template.New("WMTSCapabilities.xml").
-			ParseFiles(path))
+		template.ParseFiles(path))
 	return capabilitiesTemplate
 }
 
@@ -143,7 +144,6 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 		}
 		switch operation {
 		case GetTile:
-			log.Println("Converting wmts tile request to kvp.")
 			missingParams := findMissingParams(query, GetTileKeys[:])
 			if len(missingParams) == 0 {
 				statusCode = http.StatusOK
@@ -154,7 +154,6 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 				exception = errors.New("Missing parameters: '" + strings.Join(missingParams, "', '") + "'.")
 			}
 		case GetCapabilities:
-			log.Println("Converting wmts getCapabilities request to kvp.")
 			statusCode = http.StatusOK
 			contentType = "application/xml; charset=UTF-8"
 			path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
@@ -171,6 +170,48 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 	return statusCode, path, contentType, operation, exception
 }
 
+// HostAndPath is HostAndPath
+type HostAndPath struct {
+	Protocol string
+	Host     string
+	Path     string
+}
+
+// https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		log.Fatal(err)
+		return false
+	}
+	log.Println(err)
+	return true
+}
+
+func hostAndPath(r *http.Request) HostAndPath {
+	var protocol, host, path string
+	if len(r.Header.Get("X-Forwarded-Proto")) > 1 {
+		protocol = r.Header.Get("X-Forwarded-Proto")
+	} else {
+		protocol = "http"
+	}
+
+	if len(r.Header.Get("X-Forward-Host")) > 1 {
+		host = r.Header.Get("X-Forward-Host")
+	}
+
+	if len(r.Header.Get("X-Script-Name")) > 1 {
+		path = r.Header.Get("X-Script-Name")
+	}
+	return HostAndPath{
+		Protocol: protocol,
+		Host:     host,
+		Path:     path}
+}
+
 // TODO
 // enable logging
 // determine what to do with getfeatureinfo request...
@@ -178,12 +219,16 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
-	capabilitiestemplate := flag.String("capabilitiesfile", "", "Optional GetCapabilities template file, if not set request will be proxied.")
+	capabilitiestemplate := flag.String("t", "", "Optional GetCapabilities template file, if not set request will be proxied.")
 
 	flag.Parse()
 
 	if len(*host) == 0 {
 		log.Fatal("No target host is configured")
+		return
+	}
+
+	if !exists(*capabilitiestemplate) {
 		return
 	}
 
@@ -228,7 +273,13 @@ func main() {
 		if exception != nil {
 			xmlparseException = errorXMLTemplate.Execute(w, exception.Error())
 		} else if operation == GetCapabilities && *capabilitiestemplate != "" {
-			xmlparseException = getCapabilitiesTemplate(*capabilitiestemplate).Execute(w, path)
+			buf := new(bytes.Buffer)
+
+			getCapabilitiesTemplate(*capabilitiestemplate).Execute(buf, hostAndPath(r))
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/xml")
+			w.Write([]byte(buf.Bytes()))
+			return
 		}
 
 		if xmlparseException != nil {

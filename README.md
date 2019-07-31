@@ -54,7 +54,7 @@ go test
 ### run
 
 ```go
-go run wmts-kvp-to-restful.go error-template.go -host=https://geodata.nationaalgeoregister.nl
+go run wmts-kvp-to-restful.go error-template.go -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml
 ```
 
 ### build
@@ -63,10 +63,15 @@ go run wmts-kvp-to-restful.go error-template.go -host=https://geodata.nationaalg
 go build wmts-kvp-to-restful.go error-template.go
 ```
 
-## configuration
+## WMTS Capabilities
 
-Needs a `WMTSCapabilities.xml`-file in the docker container at the `/srv/wmts-kvp-to-restful/WMTSCapabilities.xml` location. The docker-example below achieves this through a mount.
-An example of this `WMTSCapabilities.xml`-file can be found in the project root. Use `{{ . }}` to insert the kvp styled getcapabilities url in the document.
+WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo requests. While the main focus of the wmts-kvp-to-restful application is rewriting the GetTile request, the other two requesttypes still part of the WMTS KVP spec. So when starting the application there is the option in setting an template for the WMTS GetCapabilities request.
+
+```cmd
+-t=./path/to/template/WMTSCapabilities.template.xml
+```
+
+An example of this tempalte can be found in the example dir.
 
 ## docker
 
