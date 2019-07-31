@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+func TestTheTest(t *testing.T) {
+
+	testmap := map[string][]string{"layer": {"1"}, "tilematrixset": {"2"}, "tilematrix": {"3"}, "tilecol": {"4"}, "tilerow": {"5"}, "format": {"6"}}
+	value := testmap["layer"]
+
+	println(value[0])
+}
+
 func TestNormalPath(t *testing.T) {
 	partone := "part/one"
 	parttwo := "/part/two"

@@ -42,8 +42,6 @@ func operationFromString(s string) Operation {
 	}
 }
 
-var errorXMLTemplate = template.Must(template.New("errorXML.xml").Parse(errorXML))
-
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
 	for key, values := range query {
@@ -110,12 +108,6 @@ func findMissingParams(query url.Values, queryParams []string) []string {
 	return missingParams
 }
 
-// ExInvalidRequestValues is ExInvalidRequestValues
-const ExInvalidRequestValues string = "Invalid number of request values"
-
-// ExMultipleValuesFound is ExMultipleValuesFound
-const ExMultipleValuesFound string = "Multiple query values found"
-
 // prio in order: GetCapabilities, GetTiles, GetFeatureInfo
 func getOperation(query url.Values) (operation Operation, exception error) {
 	request := query["request"]
@@ -171,12 +163,6 @@ type HostAndPath struct {
 	Protocol string
 	Host     string
 	Path     string
-}
-
-// ExceptionCodeAndMessage is ExceptionCodeAndMessage
-type ExceptionCodeAndMessage struct {
-	ExceptionCode string
-	Message       string
 }
 
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
@@ -257,11 +243,18 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var xmlparseException error
 
-		query, formatException := formatQuery(r.URL.Query())
-		statusCode, path, contentType, operation, exception := handleOperation(query, r, formatException)
-		if statusCode != 200 {
-			w.WriteHeader(statusCode)
+		if len(r.URL.Query()["request"]) > 1 {
+
+			sendError(w, r)
+			return
 		}
+		println(r.URL.Query()["request"][0])
+
+		query, formatException := formatQuery(r.URL.Query())
+		_, path, contentType, operation, exception := handleOperation(query, r, formatException)
+		// if statusCode != 200 {
+		// 	w.WriteHeader(statusCode)
+		// }
 
 		if contentType != "" {
 			w.Header().Set("Content-Type", contentType)
