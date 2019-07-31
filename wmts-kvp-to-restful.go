@@ -39,9 +39,9 @@ func operationFromString(s string) Operation {
 	}
 }
 
-var errorXmlTemplate = template.Must(
-	template.New("errorXml.xml").
-		Parse(errorXml))
+var errorXMLTemplate = template.Must(
+	template.New("errorXML.xml").
+		Parse(errorXML))
 
 func formatQuery(query url.Values) (url.Values, error) {
 	newQuery := url.Values{}
@@ -177,7 +177,7 @@ func handleOperation(query url.Values, r *http.Request, incomingException error)
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
-	capabilitiesfile := flag.String("capabilitiesfile", "WMTSCapabilities.xml", "Optional GetCapabilities template file, if not set request will be proxied.")
+	capabilitiestemplate := flag.String("capabilitiesfile", "", "Optional GetCapabilities template file, if not set request will be proxied.")
 
 	flag.Parse()
 
@@ -225,9 +225,9 @@ func main() {
 		}
 
 		if exception != nil {
-			xmlparseException = errorXmlTemplate.Execute(w, exception.Error())
-		} else if operation == GetCapabilities && *capabilitiesfile != "" {
-			xmlparseException = getCapabilitiesTemplate(*capabilitiesfile).Execute(w, path)
+			xmlparseException = errorXMLTemplate.Execute(w, exception.Error())
+		} else if operation == GetCapabilities && *capabilitiestemplate != "" {
+			xmlparseException = getCapabilitiesTemplate(*capabilitiestemplate).Execute(w, path)
 		}
 
 		if xmlparseException != nil {

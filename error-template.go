@@ -1,6 +1,6 @@
 package main
 
-const errorXml = `
+const errorXML = `
 <?xml version="1.0"?>
 <ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1"
                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

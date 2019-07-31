@@ -17,7 +17,7 @@ ENV CGO_ENABLED=1
 ENV GOOS=linux
 
 #build the binary with debug information removed
-RUN go build -ldflags '-w -s -linkmode external -extldflags -static' -a -installsuffix cgo -o /wmts-kvp-to-restful wmts-kvp-to-restful.go
+RUN go build -ldflags '-w -s -linkmode external -extldflags -static' -a -installsuffix cgo -o /wmts-kvp-to-restful wmts-kvp-to-restful.go error-template.go
 
 FROM scratch as service
 WORKDIR /

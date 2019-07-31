@@ -54,18 +54,19 @@ go test
 ### run
 
 ```go
-go run wmts-kvp-to-restful.go -host=https://geodata.nationaalgeoregister.nl
+go run wmts-kvp-to-restful.go error-template.go -host=https://geodata.nationaalgeoregister.nl
 ```
 
 ### build
 
 ```go
-go build wmts-kvp-to-restful.go
+go build wmts-kvp-to-restful.go error-template.go
 ```
 
 ## configuration
+
 Needs a `WMTSCapabilities.xml`-file in the docker container at the `/srv/wmts-kvp-to-restful/WMTSCapabilities.xml` location. The docker-example below achieves this through a mount.
-An example of this `WMTSCapabilities.xml`-file can be found in the project root. Use `{{ . }}` to insert the kvp styled getcapabilities url in the document.     
+An example of this `WMTSCapabilities.xml`-file can be found in the project root. Use `{{ . }}` to insert the kvp styled getcapabilities url in the document.
 
 ## docker
 
