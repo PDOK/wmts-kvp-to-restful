@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
 	"log"
@@ -9,7 +8,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"regexp"
 	"strings"
 	"text/template"
 )
@@ -42,51 +40,44 @@ func operationFromString(s string) Operation {
 	}
 }
 
-func formatQuery(query url.Values) (url.Values, error) {
-	newQuery := url.Values{}
+// formats the WMTS query keys to lowercase, no WMTS query keys will be ignored
+func formatQueryKeys(query url.Values) (url.Values, url.Values, error) {
+	// WMTSKeys to format, note: is only a union of the getcapabilities & gettile keys
+	WMTSKeys := [9]string{"request", "service", "version", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+
+	newWMTSQuery := url.Values{}
+	noneWMTSQuery := url.Values{}
+
 	for key, values := range query {
-		if len(values) != 1 {
-			return nil, errors.New(ExMultipleValuesFound)
+		for _, wmtskey := range WMTSKeys {
+			if wmtskey == strings.ToLower(key) {
+				if len(values) != 1 {
+					return nil, nil, errors.New(ExMultipleValuesFound)
+				}
+				newWMTSQuery[wmtskey] = values
+			}
 		}
-		newQuery[strings.ToLower(key)] = values
 	}
-	return newQuery, nil
+
+	for key, values := range query {
+		isWMTSkey := false
+		for _, wmtskey := range WMTSKeys {
+			if wmtskey == strings.ToLower(key) {
+				isWMTSkey = true
+				break
+			}
+		}
+		if !isWMTSkey {
+			noneWMTSQuery[key] = values
+		}
+	}
+	return newWMTSQuery, noneWMTSQuery, nil
 }
 
 func getCapabilitiesTemplate(path string) *template.Template {
 	var capabilitiesTemplate = template.Must(
 		template.ParseFiles(path))
 	return capabilitiesTemplate
-}
-
-func tileQueryToPath(query url.Values) (path string) {
-	var regex = regexp.MustCompile(`^.*:(.*)$`)
-
-	tilematrix := query["tilematrix"][0]
-	groups := regex.FindAllStringSubmatch(tilematrix, -1)
-	if groups != nil {
-		tilematrix = groups[0][1]
-	}
-
-	var fileExtension string
-	switch query["format"][0] {
-	case "image/png8":
-		fileExtension = ".png"
-	case "image/jpeg":
-		fileExtension = ".jpeg"
-	default:
-		fileExtension = ".png"
-	}
-
-	path = "/" +
-		query["layer"][0] + "/" +
-		query["tilematrixset"][0] + "/" +
-		tilematrix + "/" +
-		query["tilecol"][0] + "/" +
-		query["tilerow"][0] +
-		fileExtension
-
-	return path
 }
 
 func buildNewPath(urlPath, newQueryPath string) string {
@@ -241,47 +232,60 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var xmlparseException error
 
-		if len(r.URL.Query()["request"]) > 1 {
+		// WMTSquery, noneWMTSquery, formatException := formatQueryKeys(r.URL.Query())
+		WMTSquery, _, _ := formatQueryKeys(r.URL.Query())
 
-			sendError(w, r)
-			return
+		if len(WMTSquery["request"]) == 1 {
+			switch strings.ToLower(WMTSquery["request"][0]) {
+			case "gettile":
+				//return GetTile
+				procesGetTileRequest(WMTSquery, w, r)
+				proxy.ServeHTTP(w, r)
+			case "getcapabilities":
+				//return GetCapabilities
+			case "getfeatureinfo":
+				//return GetFeatureInfoj
+			default:
+				//return None
+			}
+		} else {
+			proxy.ServeHTTP(w, r)
 		}
-		println(r.URL.Query()["request"][0])
 
-		query, formatException := formatQuery(r.URL.Query())
-		_, path, contentType, operation, exception := handleOperation(query, r, formatException)
+		// var xmlparseException error
+
+		// _, path, contentType, operation, exception := handleOperation(WMTSquery, r, formatException)
 		// if statusCode != 200 {
 		// 	w.WriteHeader(statusCode)
 		// }
 
-		if contentType != "" {
-			w.Header().Set("Content-Type", contentType)
-		}
+		// if contentType != "" {
+		// 	w.Header().Set("Content-Type", contentType)
+		// }
 
-		if path != "" {
-			r.URL.Path = path
-			r.URL.RawQuery = ""
-		}
+		// if path != "" {
+		// 	r.URL.Path = path
+		// 	r.URL.RawQuery = ""
+		// }
 
-		if exception != nil {
-			xmlparseException = errorXMLTemplate.Execute(w, exception.Error())
-		} else if operation == GetCapabilities && *capabilitiestemplate != "" {
-			buf := new(bytes.Buffer)
+		// if exception != nil {
+		// 	xmlparseException = errorXMLTemplate.Execute(w, exception.Error())
+		// } else if operation == GetCapabilities && *capabilitiestemplate != "" {
+		// 	buf := new(bytes.Buffer)
 
-			getCapabilitiesTemplate(*capabilitiestemplate).Execute(buf, hostAndPath(r))
-			w.WriteHeader(http.StatusOK)
-			w.Header().Set("Content-Type", "application/xml")
-			w.Write([]byte(buf.Bytes()))
-			return
-		}
+		// 	getCapabilitiesTemplate(*capabilitiestemplate).Execute(buf, hostAndPath(r))
+		// 	w.WriteHeader(http.StatusOK)
+		// 	w.Header().Set("Content-Type", "application/xml")
+		// 	w.Write([]byte(buf.Bytes()))
+		// 	return
+		// }
 
-		if xmlparseException != nil {
-			log.Fatal(xmlparseException.Error())
-		}
+		// if xmlparseException != nil {
+		// 	log.Fatal(xmlparseException.Error())
+		// }
 
-		proxy.ServeHTTP(w, r)
+		// proxy.ServeHTTP(w, r)
 		return
 	})
 

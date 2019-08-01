@@ -8,14 +8,6 @@ import (
 	"testing"
 )
 
-func TestTheTest(t *testing.T) {
-
-	testmap := map[string][]string{"layer": {"1"}, "tilematrixset": {"2"}, "tilematrix": {"3"}, "tilecol": {"4"}, "tilerow": {"5"}, "format": {"6"}}
-	value := testmap["layer"]
-
-	println(value[0])
-}
-
 func TestNormalPath(t *testing.T) {
 	partone := "part/one"
 	parttwo := "/part/two"
@@ -271,18 +263,23 @@ func TestMissingOperationException(t *testing.T) {
 	}
 }
 func TestFormatQuery(t *testing.T) {
-	query := url.Values{"REQUEST": {"GetFeatureInfo"}, "LAYER": {"a"}}
-	expectedQuery := url.Values{"request": {"GetFeatureInfo"}, "layer": {"a"}}
+	query := url.Values{"REQUEST": {"GetFeatureInfo"}, "LAYER": {"a"}, "ID-strings": {"vd3fsw", "kw3er3"}}
+	expectedWMTSQuery := url.Values{"request": {"GetFeatureInfo"}, "layer": {"a"}}
+	expectedQuery := url.Values{"ID-strings": {"vd3fsw", "kw3er3"}}
 
-	resultQuery, _ := formatQuery(query)
-	if !reflect.DeepEqual(expectedQuery, resultQuery) {
+	resultWMTSQuery, resultQuery, _ := formatQueryKeys(query)
+
+	if !reflect.DeepEqual(expectedWMTSQuery, resultWMTSQuery) {
 		t.Errorf("Query keys were not lowercased.")
+	}
+	if !reflect.DeepEqual(expectedQuery, resultQuery) {
+		t.Errorf("Expected query keys did not match, got: %s, want: %s.", resultQuery, expectedQuery)
 	}
 }
 
 func TestFormatQueryException(t *testing.T) {
 	query := url.Values{"REQUEST": {"GetFeatureInfo"}, "LAYER": {"a"}}
-	_, exception := formatQuery(query)
+	_, _, exception := formatQueryKeys(query)
 	if exception != nil {
 		t.Errorf("Exception was incorrect, got: %s, want: %s.", exception.Error(), "nil")
 	}
@@ -291,7 +288,7 @@ func TestFormatQueryException(t *testing.T) {
 func TestFormatQueryRaisesErrorOnMultipleRequestValues(t *testing.T) {
 	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
 
-	resultQuery, _ := formatQuery(query)
+	resultQuery, _, _ := formatQueryKeys(query)
 	if resultQuery != nil {
 		t.Errorf("With erroneous input result query should be nil.")
 	}
@@ -300,7 +297,7 @@ func TestFormatQueryRaisesErrorOnMultipleRequestValues(t *testing.T) {
 func TestFormatQueryRaisesErrorOnMultipleRequestValuesException(t *testing.T) {
 	query := url.Values{"REQUEST": {"GetFeatureInfo", "y", "x"}, "LAYER": {"a"}}
 
-	_, exception := formatQuery(query)
+	_, _, exception := formatQueryKeys(query)
 	if exception == nil {
 		t.Errorf(`Exception was incorrect, got: nil, want: %s.`, ExMultipleValuesFound)
 	} else if exception.Error() != ExMultipleValuesFound {
