@@ -48,7 +48,7 @@ With an incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex 
 ### test
 
 ```go
-go test
+go test ./...
 ```
 
 ### run
