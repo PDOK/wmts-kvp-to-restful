@@ -1,8 +1,10 @@
-package main
+package error
 
 import (
 	"bytes"
 	"net/http"
+	"net/url"
+	"strings"
 	"text/template"
 )
 
@@ -34,11 +36,28 @@ type WMTSException struct {
 	StatusCode int
 }
 
-func sendError(e WMTSException, w http.ResponseWriter, r *http.Request) {
+// SendError is SendError
+func SendError(e WMTSException, w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	errorXMLTemplate.Execute(buf, e)
 
 	w.WriteHeader(http.StatusBadRequest)
 	w.Header().Set("Content-Type", "application/xml")
 	w.Write([]byte(buf.Bytes()))
+}
+
+func FindMissingParams(query url.Values, queryParams []string) []string {
+	var missingParams []string
+	for _, param := range queryParams {
+
+		paramInQuery := false
+		for key := range query {
+			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
+		}
+		if !paramInQuery {
+			missingParams = append(missingParams, param)
+		}
+	}
+	return missingParams
+
 }

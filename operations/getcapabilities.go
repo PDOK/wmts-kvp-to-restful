@@ -1,16 +1,11 @@
-package main
+package operations
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"text/template"
 )
-
-//GetCapabilitiesKeys is GetCapabilitiesKeys
-var GetCapabilitiesKeys = [2]string{"request", "service"}
 
 // HostAndPath is HostAndPath
 type HostAndPath struct {
@@ -27,16 +22,17 @@ func hostAndPath(r *http.Request) HostAndPath {
 		protocol = "http"
 	}
 
+	// Maybe something with port
 	if len(r.Header.Get("X-Forward-Host")) > 1 {
 		host = r.Header.Get("X-Forward-Host")
 	} else {
-		host = r.URL.Host
+		host = "localhost"
 	}
 
 	if len(r.Header.Get("X-Script-Name")) > 1 {
-		host = r.Header.Get("X-Script-Name")
+		path = r.Header.Get("X-Script-Name")
 	} else {
-		host = r.URL.Path
+		path = r.URL.Path
 	}
 
 	return HostAndPath{
@@ -50,14 +46,13 @@ func getCapabilitiesTemplate(path string) *template.Template {
 	return capabilitiesTemplate
 }
 
-func procesGetCapabilitiesRequest(query url.Values, otherquery string, template string, w http.ResponseWriter, r *http.Request) {
-	missingParams := findMissingParams(query, GetCapabilitiesKeys[:])
-	if len(missingParams) != 0 {
-		err := WMTSException{Error: fmt.Errorf("Missing parameters: " + strings.Join(missingParams, ", ")), Code: "MissingParameterValue", StatusCode: 400}
-		sendError(err, w, r)
-		return
-	}
+// GetCapabilitiesKeys is public
+func GetCapabilitiesKeys() []string {
+	return []string{"request", "service"}
+}
 
+// ProcesGetCapabilitiesRequest is public
+func ProcesGetCapabilitiesRequest(query url.Values, otherquery string, template string, w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	getCapabilitiesTemplate(template).Execute(buf, hostAndPath(r))
 	w.Write([]byte(buf.Bytes()))

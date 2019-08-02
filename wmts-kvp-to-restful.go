@@ -9,10 +9,13 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	e "github.com/PDOK/wmts-kvp-to-restful/error"
+	o "github.com/PDOK/wmts-kvp-to-restful/operations"
 )
 
 // formats the WMTS query keys to lowercase, no WMTS query keys will be ignored
-func formatQueryKeys(query url.Values) (url.Values, string, WMTSException) {
+func formatQueryKeys(query url.Values) (url.Values, string, e.WMTSException) {
 	// WMTSKeys to format, note: is only a union of the getcapabilities & gettile keys
 	WMTSKeys := [9]string{"request", "service", "version", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 
@@ -23,7 +26,7 @@ func formatQueryKeys(query url.Values) (url.Values, string, WMTSException) {
 		for _, wmtskey := range WMTSKeys {
 			if wmtskey == strings.ToLower(key) {
 				if len(values) != 1 {
-					return nil, "", WMTSException{Error: fmt.Errorf("Multiple query values found for %s: %s", key, strings.Join(values, ",")), Code: "InvalidParameterValue", StatusCode: 400}
+					return nil, "", e.WMTSException{Error: fmt.Errorf("Multiple query values found for %s: %s", key, strings.Join(values, ",")), Code: "InvalidParameterValue", StatusCode: 400}
 				}
 				newWMTSQuery[wmtskey] = values
 			}
@@ -44,26 +47,11 @@ func formatQueryKeys(query url.Values) (url.Values, string, WMTSException) {
 			}
 		}
 	}
-	return newWMTSQuery, strings.TrimRight(noneWMTSQuery, "&"), WMTSException{}
+	return newWMTSQuery, strings.TrimRight(noneWMTSQuery, "&"), e.WMTSException{}
 }
 
 func buildNewPath(urlPath, newQueryPath string) string {
 	return strings.TrimRight(urlPath, "/") + newQueryPath
-}
-
-func findMissingParams(query url.Values, queryParams []string) []string {
-	var missingParams []string
-	for _, param := range queryParams {
-
-		paramInQuery := false
-		for key := range query {
-			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
-		}
-		if !paramInQuery {
-			missingParams = append(missingParams, param)
-		}
-	}
-	return missingParams
 }
 
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
@@ -124,23 +112,36 @@ func main() {
 		WMTSquery, OtherQuery, err := formatQueryKeys(r.URL.Query())
 
 		if err.Error != nil {
-			sendError(err, w, r)
+			e.SendError(err, w, r)
 			return
 		}
 
 		if len(WMTSquery["request"]) == 1 {
 			switch strings.ToLower(WMTSquery["request"][0]) {
 			case "gettile":
-				if procesGetTileRequest(WMTSquery, OtherQuery, w, r) {
+				missingParams := e.FindMissingParams(WMTSquery, o.GetTileKeys())
+				if len(missingParams) != 0 {
+					err := e.WMTSException{Error: fmt.Errorf("Missing parameters: " + strings.Join(missingParams, ", ")), Code: "MissingParameterValue", StatusCode: 400}
+					e.SendError(err, w, r)
+					return
+				}
+
+				if o.ProcesGetTileRequest(WMTSquery, OtherQuery, w, r) {
 					proxy.ServeHTTP(w, r)
 				}
 			case "getcapabilities":
-				procesGetCapabilitiesRequest(WMTSquery, OtherQuery, *capabilitiestemplate, w, r)
+				missingParams := e.FindMissingParams(WMTSquery, o.GetCapabilitiesKeys())
+				if len(missingParams) != 0 {
+					err := e.WMTSException{Error: fmt.Errorf("Missing parameters: " + strings.Join(missingParams, ", ")), Code: "MissingParameterValue", StatusCode: 400}
+					e.SendError(err, w, r)
+					return
+				}
+				o.ProcesGetCapabilitiesRequest(WMTSquery, OtherQuery, *capabilitiestemplate, w, r)
 			case "getfeatureinfo":
 				//return GetFeatureInfo
 			default:
-				unknownRequest := WMTSException{Error: fmt.Errorf("Invalid request value: %s", WMTSquery["request"][0]), Code: "InvalidParameterValue", StatusCode: 400}
-				sendError(unknownRequest, w, r)
+				unknownRequest := e.WMTSException{Error: fmt.Errorf("Invalid request value: %s", WMTSquery["request"][0]), Code: "InvalidParameterValue", StatusCode: 400}
+				e.SendError(unknownRequest, w, r)
 			}
 		} else {
 			proxy.ServeHTTP(w, r)

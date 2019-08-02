@@ -1,17 +1,13 @@
-package main
+package operations
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"text/template"
 )
-
-// GetTileKeys containing the manditory query keys
-var GetTileKeys = [8]string{"request", "service", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 
 var regex = regexp.MustCompile(`^.*:(.*)$`)
 
@@ -52,14 +48,13 @@ func tileQueryToPath(query url.Values) string {
 	return buf.String()
 }
 
-func procesGetTileRequest(query url.Values, otherquery string, w http.ResponseWriter, r *http.Request) bool {
-	missingParams := findMissingParams(query, GetTileKeys[:])
-	if len(missingParams) != 0 {
-		err := WMTSException{Error: fmt.Errorf("Missing parameters: " + strings.Join(missingParams, ", ")), Code: "MissingParameterValue", StatusCode: 400}
-		sendError(err, w, r)
+// GetTileKeys is public
+func GetTileKeys() []string {
+	return []string{"request", "service", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+}
 
-		return false
-	}
+// ProcesGetTileRequest public
+func ProcesGetTileRequest(query url.Values, otherquery string, w http.ResponseWriter, r *http.Request) bool {
 	r.URL.Path = strings.TrimRight(r.URL.Path, "/") + tileQueryToPath(query)
 	if otherquery != "" {
 		r.URL.RawQuery = otherquery
