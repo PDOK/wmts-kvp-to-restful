@@ -136,7 +136,7 @@ func main() {
 					e.SendError(err, w, r)
 					return
 				}
-				o.ProcesGetCapabilitiesRequest(WMTSquery, OtherQuery, *capabilitiestemplate, w, r)
+				o.ProcesGetCapabilitiesRequest(WMTSquery, *capabilitiestemplate, w, r)
 			case "getfeatureinfo":
 				//return GetFeatureInfo
 			default:

@@ -52,7 +52,7 @@ func GetCapabilitiesKeys() []string {
 }
 
 // ProcesGetCapabilitiesRequest is public
-func ProcesGetCapabilitiesRequest(query url.Values, otherquery string, template string, w http.ResponseWriter, r *http.Request) {
+func ProcesGetCapabilitiesRequest(query url.Values, template string, w http.ResponseWriter, r *http.Request) {
 	buf := new(bytes.Buffer)
 	getCapabilitiesTemplate(template).Execute(buf, hostAndPath(r))
 	w.Write([]byte(buf.Bytes()))

@@ -46,6 +46,7 @@ func SendError(e WMTSException, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(buf.Bytes()))
 }
 
+// FindMissingParams is FindMissingParams
 func FindMissingParams(query url.Values, queryParams []string) []string {
 	var missingParams []string
 	for _, param := range queryParams {
@@ -59,5 +60,4 @@ func FindMissingParams(query url.Values, queryParams []string) []string {
 		}
 	}
 	return missingParams
-
 }
