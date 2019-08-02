@@ -54,7 +54,7 @@ go test
 ### run
 
 ```go
-go run wmts-kvp-to-restful.go error-template.go -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml
+go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml
 ```
 
 ### build

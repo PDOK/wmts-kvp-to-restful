@@ -1,58 +1,29 @@
 package main
 
 import (
-	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
-	"text/template"
 )
-
-// Operation the constant type for the available WMTS Operations and an is ordered.
-type Operation string
-
-// GetTileKeys containing the manditory query keys
-var GetTileKeys = [6]string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
-
-// Const defining the available WMTS Operations
-// Maybe check if al the required KVP are available
-const (
-	GetCapabilities Operation = "getcapabilities"
-	GetTile         Operation = "gettile"
-	GetFeatureInfo  Operation = "getfeatureinfo"
-	None            Operation = "none"
-)
-
-func operationFromString(s string) Operation {
-	switch strings.ToLower(s) {
-	case "getcapabilities":
-		return GetCapabilities
-	case "gettile":
-		return GetTile
-	case "getfeatureinfo":
-		return GetFeatureInfo
-	default:
-		return None
-	}
-}
 
 // formats the WMTS query keys to lowercase, no WMTS query keys will be ignored
-func formatQueryKeys(query url.Values) (url.Values, url.Values, error) {
+func formatQueryKeys(query url.Values) (url.Values, string, WMTSException) {
 	// WMTSKeys to format, note: is only a union of the getcapabilities & gettile keys
 	WMTSKeys := [9]string{"request", "service", "version", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 
 	newWMTSQuery := url.Values{}
-	noneWMTSQuery := url.Values{}
+	noneWMTSQuery := "?"
 
 	for key, values := range query {
 		for _, wmtskey := range WMTSKeys {
 			if wmtskey == strings.ToLower(key) {
 				if len(values) != 1 {
-					return nil, nil, errors.New(ExMultipleValuesFound)
+					return nil, "", WMTSException{Error: fmt.Errorf("Multiple query values found for %s: %s", key, strings.Join(values, ",")), Code: "InvalidParameterValue", StatusCode: 400}
 				}
 				newWMTSQuery[wmtskey] = values
 			}
@@ -68,16 +39,12 @@ func formatQueryKeys(query url.Values) (url.Values, url.Values, error) {
 			}
 		}
 		if !isWMTSkey {
-			noneWMTSQuery[key] = values
+			for _, v := range values {
+				noneWMTSQuery = noneWMTSQuery + fmt.Sprintf("%s=%s&", key, v)
+			}
 		}
 	}
-	return newWMTSQuery, noneWMTSQuery, nil
-}
-
-func getCapabilitiesTemplate(path string) *template.Template {
-	var capabilitiesTemplate = template.Must(
-		template.ParseFiles(path))
-	return capabilitiesTemplate
+	return newWMTSQuery, strings.TrimRight(noneWMTSQuery, "&"), WMTSException{}
 }
 
 func buildNewPath(urlPath, newQueryPath string) string {
@@ -99,63 +66,6 @@ func findMissingParams(query url.Values, queryParams []string) []string {
 	return missingParams
 }
 
-// prio in order: GetCapabilities, GetTiles, GetFeatureInfo
-func getOperation(query url.Values) (operation Operation, exception error) {
-	request := query["request"]
-	if len(request) != 1 {
-		return None, errors.New(ExInvalidRequestValues)
-	}
-	return operationFromString(request[0]), nil
-}
-
-func handleOperation(query url.Values, r *http.Request, incomingException error) (
-	statusCode int, path string, contentType string, operation Operation, exception error) {
-	if incomingException != nil {
-		statusCode = http.StatusBadRequest
-		contentType = "application/xml; charset=UTF-8"
-		exception = incomingException
-	} else {
-		operation, exception = getOperation(query)
-		if exception != nil {
-			statusCode = http.StatusBadRequest
-			contentType = "application/xml; charset=UTF-8"
-			return statusCode, path, contentType, operation, exception
-		}
-		switch operation {
-		case GetTile:
-			missingParams := findMissingParams(query, GetTileKeys[:])
-			if len(missingParams) == 0 {
-				statusCode = http.StatusOK
-				path = buildNewPath(r.URL.Path, tileQueryToPath(query))
-			} else {
-				statusCode = http.StatusBadRequest
-				contentType = "application/xml; charset=UTF-8"
-				exception = errors.New("Missing parameters: '" + strings.Join(missingParams, "', '") + "'.")
-			}
-		case GetCapabilities:
-			statusCode = http.StatusOK
-			contentType = "application/xml; charset=UTF-8"
-			path = buildNewPath(r.URL.Path, "/v1_0/WMTSCapabilities.xml")
-		case GetFeatureInfo:
-			statusCode = http.StatusInternalServerError
-			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("GetFeatureInfo not implemented")
-		case None: // Probably a MissingParameterValue Error
-			statusCode = http.StatusInternalServerError
-			contentType = "application/xml; charset=UTF-8"
-			exception = errors.New("Not an valid WMTS KVP request")
-		}
-	}
-	return statusCode, path, contentType, operation, exception
-}
-
-// HostAndPath is HostAndPath
-type HostAndPath struct {
-	Protocol string
-	Host     string
-	Path     string
-}
-
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
 func exists(path string) bool {
 	_, err := os.Stat(path)
@@ -168,27 +78,6 @@ func exists(path string) bool {
 	}
 	log.Println(err)
 	return true
-}
-
-func hostAndPath(r *http.Request) HostAndPath {
-	var protocol, host, path string
-	if len(r.Header.Get("X-Forwarded-Proto")) > 1 {
-		protocol = r.Header.Get("X-Forwarded-Proto")
-	} else {
-		protocol = "http"
-	}
-
-	if len(r.Header.Get("X-Forward-Host")) > 1 {
-		host = r.Header.Get("X-Forward-Host")
-	}
-
-	if len(r.Header.Get("X-Script-Name")) > 1 {
-		path = r.Header.Get("X-Script-Name")
-	}
-	return HostAndPath{
-		Protocol: protocol,
-		Host:     host,
-		Path:     path}
 }
 
 // TODO
@@ -232,60 +121,30 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		WMTSquery, OtherQuery, err := formatQueryKeys(r.URL.Query())
 
-		// WMTSquery, noneWMTSquery, formatException := formatQueryKeys(r.URL.Query())
-		WMTSquery, _, _ := formatQueryKeys(r.URL.Query())
+		if err.Error != nil {
+			sendError(err, w, r)
+			return
+		}
 
 		if len(WMTSquery["request"]) == 1 {
 			switch strings.ToLower(WMTSquery["request"][0]) {
 			case "gettile":
-				//return GetTile
-				procesGetTileRequest(WMTSquery, w, r)
-				proxy.ServeHTTP(w, r)
+				if procesGetTileRequest(WMTSquery, OtherQuery, w, r) {
+					proxy.ServeHTTP(w, r)
+				}
 			case "getcapabilities":
-				//return GetCapabilities
+				procesGetCapabilitiesRequest(WMTSquery, OtherQuery, *capabilitiestemplate, w, r)
 			case "getfeatureinfo":
-				//return GetFeatureInfoj
+				//return GetFeatureInfo
 			default:
-				//return None
+				unknownRequest := WMTSException{Error: fmt.Errorf("Invalid request value: %s", WMTSquery["request"][0]), Code: "InvalidParameterValue", StatusCode: 400}
+				sendError(unknownRequest, w, r)
 			}
 		} else {
 			proxy.ServeHTTP(w, r)
 		}
-
-		// var xmlparseException error
-
-		// _, path, contentType, operation, exception := handleOperation(WMTSquery, r, formatException)
-		// if statusCode != 200 {
-		// 	w.WriteHeader(statusCode)
-		// }
-
-		// if contentType != "" {
-		// 	w.Header().Set("Content-Type", contentType)
-		// }
-
-		// if path != "" {
-		// 	r.URL.Path = path
-		// 	r.URL.RawQuery = ""
-		// }
-
-		// if exception != nil {
-		// 	xmlparseException = errorXMLTemplate.Execute(w, exception.Error())
-		// } else if operation == GetCapabilities && *capabilitiestemplate != "" {
-		// 	buf := new(bytes.Buffer)
-
-		// 	getCapabilitiesTemplate(*capabilitiestemplate).Execute(buf, hostAndPath(r))
-		// 	w.WriteHeader(http.StatusOK)
-		// 	w.Header().Set("Content-Type", "application/xml")
-		// 	w.Write([]byte(buf.Bytes()))
-		// 	return
-		// }
-
-		// if xmlparseException != nil {
-		// 	log.Fatal(xmlparseException.Error())
-		// }
-
-		// proxy.ServeHTTP(w, r)
 		return
 	})
 
