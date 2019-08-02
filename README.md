@@ -60,7 +60,7 @@ go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabili
 ### build
 
 ```go
-go build wmts-kvp-to-restful.go error-template.go
+go build .
 ```
 
 ## WMTS Capabilities
