@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -67,7 +66,7 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if *logrequest {
-			fmt.Println(r.RequestURI)
+			log.Println(r.RequestURI)
 		}
 
 		mustproxy := operations.ProcesRequest(config, w, r)
