@@ -3,7 +3,6 @@ package operations
 import (
 	"bytes"
 	"net/http"
-	"net/url"
 	"text/template"
 )
 
@@ -25,8 +24,10 @@ func hostAndPath(r *http.Request) HostAndPath {
 	// Maybe something with port
 	if len(r.Header.Get("X-Forward-Host")) > 1 {
 		host = r.Header.Get("X-Forward-Host")
+	} else if len(r.URL.Host) > 0 {
+		host = r.URL.Host
 	} else {
-		host = "localhost"
+		host = "localhost:9001"
 	}
 
 	if len(r.Header.Get("X-Script-Name")) > 1 {
@@ -41,21 +42,25 @@ func hostAndPath(r *http.Request) HostAndPath {
 		Path:     path}
 }
 
-func getCapabilitiesTemplate(path string) *template.Template {
+// GetCapabilitiesTemplate usage the path to return the template file
+// and builds a template
+func getCapabilitiesTemplate(path string) (*template.Template, Exception) {
 	var capabilitiesTemplate = template.Must(template.ParseFiles(path))
-	return capabilitiesTemplate
+	return capabilitiesTemplate, nil
 }
 
-// GetCapabilitiesKeys is public
-func GetCapabilitiesKeys() []string {
+// GetCapabilitiesKeys list of manitory WMTS getcapabilities key value pairs
+func getCapabilitiesKeys() []string {
 	return []string{"request", "service"}
 }
 
-// ProcesGetCapabilitiesRequest is public
-func ProcesGetCapabilitiesRequest(query url.Values, template string, w http.ResponseWriter, r *http.Request) {
+// ProcesGetCapabilitiesRequest if a template is given this will
+// fill it in and writes it to the response
+func ProcesGetCapabilitiesRequest(config *Config, w http.ResponseWriter, r *http.Request) Exception {
 	buf := new(bytes.Buffer)
-	getCapabilitiesTemplate(template).Execute(buf, hostAndPath(r))
+	t, _ := getCapabilitiesTemplate(config.Template)
+	t.Execute(buf, hostAndPath(r))
 	w.Write([]byte(buf.Bytes()))
 	w.Header().Set("Content-Type", "application/xml")
-	return
+	return nil
 }

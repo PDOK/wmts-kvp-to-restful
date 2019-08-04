@@ -1,4 +1,4 @@
-package error
+package operations
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func TestSendError(t *testing.T) {
 	status := 400
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			err := WMTSException{Error: fmt.Errorf("Missing parameters: " + strings.Join([]string{"Request", "Service"}, ", ")), Code: code, StatusCode: status}
+			err := WMTSException{ErrorMessage: fmt.Sprintf("Missing parameters: " + strings.Join([]string{"Request", "Service"}, ", ")), ErrorCode: code, StatusCode: status}
 			SendError(err, w, r)
 		}))
 	defer ts.Close()
@@ -43,7 +43,6 @@ func TestSendError(t *testing.T) {
 }
 
 func TestFindMissingParamsHappyFlow(t *testing.T) {
-
 	correctQuery := map[string][]string{"1": {"1"}, "2": {"1"}, "3": {"1"}, "4": {"1"}, "5": {"1"}, "6": {"1"}}
 	expectedKeys := []string{"1", "2", "3", "4", "5", "6"}
 	missingParameters := FindMissingParams(correctQuery, expectedKeys)
@@ -61,5 +60,25 @@ func TestFindMissingParamsMissing(t *testing.T) {
 
 	if len(missingParameters) != 1 {
 		t.Errorf("ExpectedKeys should be empty but was not, got: %s", strings.Join(missingParameters, ","))
+	}
+}
+
+func TestUnknownService(t *testing.T) {
+
+	s := "teststring"
+	err := UnknownService(s)
+
+	if !strings.Contains(err.Error(), s) {
+		t.Errorf("Error should contain: %s, got: %s", s, err.Error())
+	}
+}
+
+func TestMissingParameterValue(t *testing.T) {
+
+	s := "teststring"
+	err := MissingParameterValue(s)
+
+	if !strings.Contains(err.Error(), s) {
+		t.Errorf("Error should contain: %s, got: %s", s, err.Error())
 	}
 }

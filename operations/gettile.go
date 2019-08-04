@@ -13,17 +13,17 @@ var regex = regexp.MustCompile(`^.*:(.*)$`)
 
 const restTemplate = `/{{ .Layer }}/{{ .Tilematrixset }}/{{ .Tilematrix }}/{{ .Tilecol }}/{{ .Tilerow }}{{ .Fileextension }}`
 
-// RestParameters is RestParameters
-type RestParameters struct {
-	Layer         string
-	Tilematrixset string
-	Tilematrix    string
-	Tilecol       string
-	Tilerow       string
-	Fileextension string
-}
-
 func tileQueryToPath(query url.Values) string {
+
+	type RestParameters struct {
+		Layer         string
+		Tilematrixset string
+		Tilematrix    string
+		Tilecol       string
+		Tilerow       string
+		Fileextension string
+	}
+
 	tilematrix := query["tilematrix"][0]
 	groups := regex.FindAllStringSubmatch(tilematrix, -1)
 	if groups != nil {
@@ -48,16 +48,25 @@ func tileQueryToPath(query url.Values) string {
 	return buf.String()
 }
 
-// GetTileKeys is public
-func GetTileKeys() []string {
-	return []string{"request", "service", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+// GetCapabilitiesKeys list of manitory WMTS gettile key value pairs
+func getTileKeys() []string {
+	return []string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 }
 
-// ProcesGetTileRequest public
-func ProcesGetTileRequest(query url.Values, otherquery string, w http.ResponseWriter, r *http.Request) bool {
-	r.URL.Path = strings.TrimRight(r.URL.Path, "/") + tileQueryToPath(query)
-	if otherquery != "" {
-		r.URL.RawQuery = otherquery
+// ProcesGetTileRequest rewrites the KVP request as RestFUL
+// and alters the request so it can be proxied
+func ProcesGetTileRequest(w http.ResponseWriter, r *http.Request) Exception {
+	wmtskeys, otherkeys := splitQueryKeys(r.URL.Query(), getTileKeys())
+	err := missingKeys(wmtskeys, getTileKeys())
+	if err != nil {
+		return err
 	}
-	return true
+
+	r.URL.Path = strings.TrimRight(r.URL.Path, "/") + tileQueryToPath(wmtskeys)
+	if len(otherkeys) > 0 {
+		r.URL.RawQuery = formatKeysToQueryString(otherkeys)
+	} else {
+		r.URL.RawQuery = ""
+	}
+	return nil
 }

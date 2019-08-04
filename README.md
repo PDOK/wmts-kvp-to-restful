@@ -77,6 +77,6 @@ An example of this template can be found in the example dir.
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run --rm -v $PWD:/srv/wmts-kvp-to-restful/data/ --name wmts-ktr -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl
+docker run -v $PWD:/srv/wmts-kvp-to-restful/data/ --name wmts-ktr -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl
 docker stop wmts-ktr
 ```
