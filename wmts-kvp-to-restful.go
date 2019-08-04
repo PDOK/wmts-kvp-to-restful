@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -30,6 +31,7 @@ func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
 	template := flag.String("t", "", "Optional GetCapabilities template file, if not set request will be proxied.")
+	logrequest := flag.Bool("l", false, "Enable request logging, default: false")
 	flag.Parse()
 
 	if len(*host) == 0 {
@@ -64,6 +66,9 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if *logrequest {
+			fmt.Println(r.RequestURI)
+		}
 
 		mustproxy := operations.ProcesRequest(config, w, r)
 		if mustproxy {
