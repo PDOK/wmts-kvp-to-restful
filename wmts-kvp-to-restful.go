@@ -6,99 +6,43 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"regexp"
-	"strings"
-	"text/template"
+	"os"
+
+	operations "github.com/PDOK/wmts-kvp-to-restful/operations"
 )
 
-var errorXMLTemplate = template.Must(
-	template.New("errorXml").
-		Funcs(template.FuncMap{"StringsJoin": strings.Join}).
-		ParseFiles("errorXml.xml"))
-
-func queryToPath(query map[string][]string) (path string, exception error) {
-	// todo: we know these are the 6 expected queryparams rewrite to simpeler function.
-	var layer, tilematrixset, tilematrix, tilecol, tilerow, format string
-
-	var regex = regexp.MustCompile(`^.*:(.*)$`)
-
-	for key, value := range query {
-		value := value[0]
-
-		if strings.ToLower(key) == "layer" {
-			layer = value
-		}
-
-		if strings.ToLower(key) == "tilematrixset" {
-			tilematrixset = value
-		}
-
-		if strings.ToLower(key) == "tilematrix" {
-			groups := regex.FindAllStringSubmatch(value, -1)
-
-			if groups != nil {
-				tilematrix = groups[0][1]
-			} else {
-				tilematrix = value
-			}
-		}
-
-		if strings.ToLower(key) == "tilerow" {
-			tilerow = value
-		}
-
-		if strings.ToLower(key) == "tilecol" {
-			tilecol = value
-		}
-
-		if strings.ToLower(key) == "format" {
-			if value == "image/png8" {
-				format = ".png"
-			} else if value == "image/jpeg" {
-				format = ".jpeg"
-			} else {
-				format = ".png"
-			}
-		}
+// https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
 	}
-
-	path = "/" + layer + "/" + tilematrixset + "/" + tilematrix + "/" + tilecol + "/" + tilerow + format
-
-	return path, nil
+	if os.IsNotExist(err) {
+		log.Fatal(err)
+		return false
+	}
+	log.Println(err)
+	return true
 }
 
-func buildNewPath(urlPath, newQueryPath string) string {
-	return strings.TrimRight(urlPath, "/") + newQueryPath
-}
-
-func validateTileQuery(query map[string][]string) []string {
-	tileParams := [6]string{
-		"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format",
-	}
-	var missingParams []string
-
-	for _, param := range tileParams {
-		paramInQuery := false
-		for key := range query {
-			paramInQuery = paramInQuery || (strings.ToLower(key) == param)
-		}
-		if !paramInQuery {
-			missingParams = append(missingParams, param)
-		}
-	}
-	return missingParams
-}
-
+// TODO - enable logging
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
-
+	template := flag.String("t", "", "Optional GetCapabilities template file, if not set request will be proxied.")
+	logrequest := flag.Bool("l", false, "Enable request logging, default: false")
 	flag.Parse()
 
 	if len(*host) == 0 {
 		log.Fatal("No target host is configured")
 		return
 	}
+
+	if len(*template) > 0 && !exists(*template) {
+		return
+	}
+
+	config := &operations.Config{Host: *host, Template: *template}
 
 	origin, _ := url.Parse(*host)
 
@@ -121,27 +65,14 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
-		missingParams := validateTileQuery(query)
-		var exception error
-		if len(missingParams) == 0 {
-			var newPath string
-			newPath, exception = queryToPath(query)
-			r.URL.Path = buildNewPath(r.URL.Path, newPath)
-			r.URL.RawQuery = ""
-		} else if len(missingParams) < 6 {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			w.Header().Set("Content-Type", "application/xml; charset=UTF-8")
-			exception = errorXMLTemplate.Execute(w, missingParams)
-		}
-		if exception != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-			w.Write([]byte(`{"status": "rewrite went wrong"}`))
-			return
+		if *logrequest {
+			log.Println(r.RequestURI)
 		}
 
-		proxy.ServeHTTP(w, r)
+		mustproxy := operations.ProcesRequest(config, w, r)
+		if mustproxy {
+			proxy.ServeHTTP(w, r)
+		}
 		return
 	})
 

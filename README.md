@@ -27,7 +27,7 @@ A request that cannot be rewriten is passed through unhandled.
 
 The WMTS-KVP-to-RESTful proxy will try to solve the issue with Geowebcache WMTS KVP generated requests. The issue is that the tilematrix values generated contain the tilematrixset as a prefix. This something that doesn't match well with a WMTS RESTful request. This is a issue that some are [experiencing](https://geoforum.nl/t/wmts-tilematrix-parameter-maakt-request-ongelding/2928) and that we ourself have experienced, especially when services are migrated from Geowebcache to a new WMTS server (like mapproxy).
 
-A invalid WMTS RESTful path would be generate, the WMTS KVP request:
+An invalid WMTS RESTful path would generate, the WMTS KVP request:
 
 ```http
 /ws/raadpleegdiensten/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=grb_bsk_grijs&STYLE=&TILEMATRIXSET=BPL72VL&TILEMATRIX=BPL72VL:11&TILEROW=1072&TILECOL=730&FORMAT=image/png
@@ -48,25 +48,43 @@ With an incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex 
 ### test
 
 ```go
-go test
+go test ./...
 ```
 
 ### run
 
 ```go
-go run wmts-kvp-to-restful.go -host=https://geodata.nationaalgeoregister.nl
+go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
 ```
 
 ### build
 
 ```go
-go build wmts-kvp-to-restful.go
+go build .
 ```
+
+## WMTS Capabilities
+
+WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo requests. While the main focus of the wmts-kvp-to-restful application is rewriting the GetTile request, the other two requesttypes still part of the WMTS KVP spec. So when starting the application there is the option in setting an template for the WMTS GetCapabilities request.
+
+```cmd
+-t=./path/to/template/WMTSCapabilities.template.xml
+```
+
+An example of this template can be found in the example dir.
 
 ## docker
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run --name wmts-ktr -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl
-docker stop wmts-ktr && docker rm wmts-ktr
+docker run -v /example:/example --name wmts-proxy -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+docker stop wmts-proxy
+docker rm wmts-proxy
+```
+
+## docker-compose
+
+```docker-compose
+docker-compose up
+docker-compose down
 ```
