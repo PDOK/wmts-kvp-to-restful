@@ -69,7 +69,7 @@ func main() {
 			log.Println(r.RequestURI)
 		}
 
-		mustproxy := operations.ProcesRequest(config, w, r)
+		mustproxy := operations.ProcessRequest(config, w, r)
 		if mustproxy {
 			proxy.ServeHTTP(w, r)
 		}
