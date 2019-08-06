@@ -77,7 +77,7 @@ An example of this template can be found in the example dir.
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run -v ./example:/example --name wmts-proxy -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+docker run -v /example:/example --name wmts-proxy -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
 docker stop wmts-proxy
 docker rm wmts-proxy
 ```
