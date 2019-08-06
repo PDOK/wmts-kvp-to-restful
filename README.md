@@ -1,7 +1,9 @@
 # wmts-kvp-to-restful
 
+![GitHub license](https://img.shields.io/github/license/PDOK/wmts-kvp-to-restful)
 ![GitHub release](https://img.shields.io/github/release/PDOK/wmts-kvp-to-restful.svg)
 ![Docker Pulls](https://img.shields.io/docker/pulls/pdok/wmts-kvp-to-restful.svg)
+![Go report](https://goreportcard.com/badge/github.com/pdok/wmts-kvp-to-restful)
 
 ## Purpose
 
