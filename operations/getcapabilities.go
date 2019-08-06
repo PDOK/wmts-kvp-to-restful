@@ -36,10 +36,7 @@ func hostAndPath(r *http.Request) HostAndPath {
 		path = r.URL.Path
 	}
 
-	return HostAndPath{
-		Protocol: protocol,
-		Host:     host,
-		Path:     path}
+	return HostAndPath{Protocol: protocol, Host: host, Path: path}
 }
 
 // GetCapabilitiesTemplate usage the path to return the template file
