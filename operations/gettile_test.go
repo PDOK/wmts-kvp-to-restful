@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestProcesGetTileRequest(t *testing.T) {
+func TestProcessGetTileRequest(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
@@ -23,7 +23,7 @@ func TestProcesGetTileRequest(t *testing.T) {
 	expected := "local/a/b/c/d/e.png?testkey=testvalue"
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ProcesGetTileRequest(w, mockRequest)
+			ProcessGetTileRequest(w, mockRequest)
 		}))
 	defer ts.Close()
 
@@ -34,7 +34,7 @@ func TestProcesGetTileRequest(t *testing.T) {
 	}
 }
 
-func TestProcesGetTileRequestMissingKeys(t *testing.T) {
+func TestProcessGetTileRequestMissingKeys(t *testing.T) {
 	var err Exception
 	var mockRequest = &http.Request{
 		Method:     "GET",
@@ -49,7 +49,7 @@ func TestProcesGetTileRequestMissingKeys(t *testing.T) {
 	expected := "Missing parameter: tilematrixset"
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			err = ProcesGetTileRequest(w, mockRequest)
+			err = ProcessGetTileRequest(w, mockRequest)
 		}))
 	defer ts.Close()
 
@@ -60,7 +60,7 @@ func TestProcesGetTileRequestMissingKeys(t *testing.T) {
 	}
 }
 
-func TestProcesGetTileRequestNoRawQuery(t *testing.T) {
+func TestProcessGetTileRequestNoRawQuery(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
@@ -74,7 +74,7 @@ func TestProcesGetTileRequestNoRawQuery(t *testing.T) {
 	expected := "local/a/b/c/d/e.png"
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ProcesGetTileRequest(w, mockRequest)
+			ProcessGetTileRequest(w, mockRequest)
 		}))
 	defer ts.Close()
 

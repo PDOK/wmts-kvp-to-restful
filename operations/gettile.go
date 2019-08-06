@@ -53,9 +53,9 @@ func getTileKeys() []string {
 	return []string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 }
 
-// ProcesGetTileRequest rewrites the KVP request as RestFUL
+// ProcessGetTileRequest rewrites the KVP request as RestFUL
 // and alters the request so it can be proxied
-func ProcesGetTileRequest(w http.ResponseWriter, r *http.Request) Exception {
+func ProcessGetTileRequest(w http.ResponseWriter, r *http.Request) Exception {
 	wmtskeys, otherkeys := splitQueryKeys(r.URL.Query(), getTileKeys())
 	err := missingKeys(wmtskeys, getTileKeys())
 	if err != nil {

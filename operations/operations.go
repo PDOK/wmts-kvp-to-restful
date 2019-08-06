@@ -78,9 +78,9 @@ func missingKeys(query url.Values, keys []string) Exception {
 	return nil
 }
 
-// ProcesRequest checks the quality of the request
-// and if it's valid to proces as a WMTS request
-func ProcesRequest(config *Config, w http.ResponseWriter, r *http.Request) bool {
+// ProcessRequest checks the quality of the request
+// and if it's valid to process as a WMTS request
+func ProcessRequest(config *Config, w http.ResponseWriter, r *http.Request) bool {
 
 	// check if it's a WMTS request
 	query, err := keysToLowerAndFilter(r.URL.Query())
@@ -94,10 +94,10 @@ func ProcesRequest(config *Config, w http.ResponseWriter, r *http.Request) bool 
 		return false
 	}
 
-	// check what WMTS request and proces
+	// check what WMTS request and process
 	switch strings.ToLower(query["request"][0]) {
 	case "gettile":
-		err := ProcesGetTileRequest(w, r)
+		err := ProcessGetTileRequest(w, r)
 		if err != nil {
 			SendError(err, w, r)
 			return false
@@ -107,7 +107,7 @@ func ProcesRequest(config *Config, w http.ResponseWriter, r *http.Request) bool 
 		if len(config.Host) < 1 {
 			return true
 		}
-		err := ProcesGetCapabilitiesRequest(config, w, r)
+		err := ProcessGetCapabilitiesRequest(config, w, r)
 		if err != nil {
 			SendError(err, w, r)
 			return false

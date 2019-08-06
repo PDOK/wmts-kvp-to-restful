@@ -120,7 +120,7 @@ func TestMissingKeysExcpetion(t *testing.T) {
 	}
 }
 
-func TestProcesRequestNoWMTS(t *testing.T) {
+func TestProcessRequestNoWMTS(t *testing.T) {
 	var proxy bool
 	var mockRequest = &http.Request{
 		Method:     "GET",
@@ -135,7 +135,7 @@ func TestProcesRequestNoWMTS(t *testing.T) {
 	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			proxy = ProcesRequest(config, w, mockRequest)
+			proxy = ProcessRequest(config, w, mockRequest)
 		}))
 	defer ts.Close()
 
@@ -146,7 +146,7 @@ func TestProcesRequestNoWMTS(t *testing.T) {
 	}
 }
 
-func TestProcesRequest(t *testing.T) {
+func TestProcessRequest(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
@@ -160,7 +160,7 @@ func TestProcesRequest(t *testing.T) {
 	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_ = ProcesRequest(config, w, mockRequest)
+			_ = ProcessRequest(config, w, mockRequest)
 		}))
 	defer ts.Close()
 
@@ -175,7 +175,7 @@ func TestProcesRequest(t *testing.T) {
 	}
 }
 
-func TestProcesRequestUnknownService(t *testing.T) {
+func TestProcessRequestUnknownService(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
@@ -189,7 +189,7 @@ func TestProcesRequestUnknownService(t *testing.T) {
 	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_ = ProcesRequest(config, w, mockRequest)
+			_ = ProcessRequest(config, w, mockRequest)
 		}))
 	defer ts.Close()
 

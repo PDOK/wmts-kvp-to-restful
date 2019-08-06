@@ -51,9 +51,9 @@ func getCapabilitiesKeys() []string {
 	return []string{"request", "service"}
 }
 
-// ProcesGetCapabilitiesRequest if a template is given this will
+// ProcessGetCapabilitiesRequest if a template is given this will
 // fill it in and writes it to the response
-func ProcesGetCapabilitiesRequest(config *Config, w http.ResponseWriter, r *http.Request) Exception {
+func ProcessGetCapabilitiesRequest(config *Config, w http.ResponseWriter, r *http.Request) Exception {
 	buf := new(bytes.Buffer)
 	t, _ := getCapabilitiesTemplate(config.Template)
 	t.Execute(buf, hostAndPath(r))

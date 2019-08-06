@@ -81,7 +81,7 @@ func TestGetCapabilitiesKeys(t *testing.T) {
 	}
 }
 
-func TestProcesGetCapabilitiesRequest(t *testing.T) {
+func TestProcessGetCapabilitiesRequest(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
@@ -97,7 +97,7 @@ func TestProcesGetCapabilitiesRequest(t *testing.T) {
 	status := 200
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ProcesGetCapabilitiesRequest(config, w, mockRequest)
+			ProcessGetCapabilitiesRequest(config, w, mockRequest)
 		}))
 	defer ts.Close()
 
