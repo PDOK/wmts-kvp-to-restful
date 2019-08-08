@@ -42,7 +42,6 @@ func exists(path string) bool {
 	return true
 }
 
-// TODO - enable logging
 func main() {
 
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")

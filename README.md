@@ -75,6 +75,20 @@ WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo re
 
 An example of this template can be found in the example dir.
 
+## Logging
+
+Logging is disabled by default and can be enabled by setting the parameter ```-l=true```. 
+
+```cmd
+-l=true
+```
+
+The logging will log:
+
+* HTTP Status Code
+* Request duration in milliseconds
+* The requestURI (path + querystring), and if proxied the new requestURI
+
 ## docker
 
 ```docker
