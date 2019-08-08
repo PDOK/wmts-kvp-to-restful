@@ -82,6 +82,8 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 
+		// Simple logging ...
+		// TODO put logging on a chan for async output
 		var logrequesturi string
 		var start time.Time
 		var elapsed time.Duration
