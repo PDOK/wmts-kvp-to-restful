@@ -3,6 +3,7 @@ package operations
 import (
 	"bytes"
 	"net/http"
+	"strconv"
 	"text/template"
 )
 
@@ -57,7 +58,20 @@ func ProcessGetCapabilitiesRequest(config *Config, w http.ResponseWriter, r *htt
 	buf := new(bytes.Buffer)
 	t, _ := getCapabilitiesTemplate(config.Template)
 	t.Execute(buf, hostAndPath(r))
-	w.Write([]byte(buf.Bytes()))
+
+	// Content-length header is needed for applications like QGIS
+	// Maybe nicer way in calc capabilities documents size
+	// For 'normal' size capabilities documents impact is low
+	capabilities := buf.String()
+
+	w.Header().Set("Server", "wmts-kvp-to-restful")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Content-Type", "application/xml")
+	w.Header().Set("Content-length", strconv.Itoa(len(capabilities)))
+
+	t.Execute(buf, hostAndPath(r))
+	w.Write([]byte(capabilities))
+
 	return nil
 }
