@@ -77,7 +77,7 @@ An example of this template can be found in the example dir.
 
 ## Logging
 
-Logging is disabled by default and can be enabled by setting the parameter ```-l=true```. 
+Logging is disabled by default and can be enabled by setting the parameter ```-l=true```.
 
 ```cmd
 -l=true
