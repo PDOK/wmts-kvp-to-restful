@@ -48,7 +48,7 @@ func getCapabilitiesTemplate(path string) (*template.Template, Exception) {
 
 // GetCapabilitiesKeys list of manitory WMTS getcapabilities key value pairs
 func getCapabilitiesKeys() []string {
-	return []string{"request", "service"}
+	return []string{"service", "request", "version"}
 }
 
 // ProcessGetCapabilitiesRequest if a template is given this will

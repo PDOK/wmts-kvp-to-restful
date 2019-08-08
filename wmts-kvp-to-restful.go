@@ -7,9 +7,26 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"time"
 
 	operations "github.com/PDOK/wmts-kvp-to-restful/operations"
 )
+
+// https://ndersson.me/post/capturing_status_code_in_net_http/
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// NewLoggingResponseWriter wrapper for the http.ResponseWriter
+func newLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
+	return &loggingResponseWriter{w, http.StatusOK}
+}
+
+func (lrw *loggingResponseWriter) WriteHeader(code int) {
+	lrw.statusCode = code
+	lrw.ResponseWriter.WriteHeader(code)
+}
 
 // https://stackoverflow.com/questions/10510691/how-to-check-whether-a-file-or-directory-exists/10510718
 func exists(path string) bool {
@@ -42,7 +59,7 @@ func main() {
 		return
 	}
 
-	config := &operations.Config{Host: *host, Template: *template}
+	config := &operations.Config{Host: *host, Template: *template, Logging: *logrequest}
 
 	origin, _ := url.Parse(*host)
 
@@ -65,13 +82,30 @@ func main() {
 	log.Println("wmts-kvp-to-restful started")
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if *logrequest {
-			log.Println(r.RequestURI)
+
+		var logrequesturi string
+		var start time.Time
+		var elapsed time.Duration
+
+		if config.Logging {
+			start = time.Now()
+			logrequesturi = r.URL.RequestURI()
 		}
 
-		mustproxy := operations.ProcessRequest(config, w, r)
+		lrw := newLoggingResponseWriter(w)
+		mustproxy := operations.ProcessRequest(config, lrw, r)
 		if mustproxy {
-			proxy.ServeHTTP(w, r)
+			proxy.ServeHTTP(lrw, r)
+
+		}
+
+		if config.Logging {
+			elapsed = time.Since(start)
+			if mustproxy {
+				log.Printf("%d %s %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), logrequesturi, r.URL.RequestURI())
+			} else {
+				log.Printf("%d %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), r.URL.RequestURI())
+			}
 		}
 		return
 	})

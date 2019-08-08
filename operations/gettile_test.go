@@ -13,7 +13,7 @@ func TestProcessGetTileRequest(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
-		URL:        &url.URL{Path: "local", RawQuery: "layer=a&tilematrixset=b&tilematrix=c&tilecol=d&tilerow=e&format=f&testkey=testvalue"},
+		URL:        &url.URL{Path: "local", RawQuery: "service=WMTS&request=GetTile&version=1.0.0&layer=a&tilematrixset=b&tilematrix=c&tilecol=d&tilerow=e&format=f&testkey=testvalue"},
 		Header:     http.Header{},
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
@@ -34,12 +34,37 @@ func TestProcessGetTileRequest(t *testing.T) {
 	}
 }
 
+func TestProcessGetTileRequestLongerPath(t *testing.T) {
+	var mockRequest = &http.Request{
+		Method:     "GET",
+		Host:       "subdomain.example.org",
+		URL:        &url.URL{Path: "local/a/path", RawQuery: "service=WMTS&request=GetTile&version=1.0.0&layer=e&tilematrixset=d&tilematrix=d:c&tilecol=b&tilerow=a&format=image/png&testkey=testvalue"},
+		Header:     http.Header{},
+		Proto:      "HTTP/1.1",
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		RemoteAddr: "192.0.2.1:1234",
+	}
+	expected := "local/a/path/e/d/c/b/a.png?testkey=testvalue"
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ProcessGetTileRequest(w, mockRequest)
+		}))
+	defer ts.Close()
+
+	http.Get(ts.URL)
+
+	if mockRequest.URL.String() != expected {
+		t.Errorf("Expected %s but was not, got: %s", expected, mockRequest.URL.String())
+	}
+}
+
 func TestProcessGetTileRequestMissingKeys(t *testing.T) {
 	var err Exception
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
-		URL:        &url.URL{Path: "local", RawQuery: "layer=a&tilematrix=c&tilecol=d&tilerow=e&format=f"},
+		URL:        &url.URL{Path: "local", RawQuery: "service=WMTS&request=GetTile&version=1.0.0&layer=a&tilematrix=c&tilecol=d&tilerow=e&format=f"},
 		Header:     http.Header{},
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
@@ -64,7 +89,7 @@ func TestProcessGetTileRequestNoRawQuery(t *testing.T) {
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
-		URL:        &url.URL{Path: "local", RawQuery: "layer=a&tilematrixset=b&tilematrix=c&tilecol=d&tilerow=e&format=f"},
+		URL:        &url.URL{Path: "local", RawQuery: "service=WMTS&request=GetTile&version=1.0.0&layer=a&tilematrixset=b&tilematrix=c&tilecol=d&tilerow=e&format=f"},
 		Header:     http.Header{},
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
@@ -86,7 +111,7 @@ func TestProcessGetTileRequestNoRawQuery(t *testing.T) {
 }
 
 func TestGetTileKeys(t *testing.T) {
-	expected := []string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+	expected := []string{"service", "request", "version", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 	if !reflect.DeepEqual(getTileKeys(), expected) {
 		t.Errorf("Expected %s but was not, got: %s", expected, getTileKeys())
 	}
