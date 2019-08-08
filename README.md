@@ -45,26 +45,6 @@ With an incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex 
 
 ![gwc-issue](img/gwc-issue.png)
 
-## Tech
-
-### test
-
-```go
-go test ./...
-```
-
-### run
-
-```go
-go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
-```
-
-### build
-
-```go
-go build .
-```
-
 ## WMTS Capabilities
 
 WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo requests. While the main focus of the wmts-kvp-to-restful application is rewriting the GetTile request, the other two requesttypes still part of the WMTS KVP spec. So when starting the application there is the option in setting an template for the WMTS GetCapabilities request.
@@ -89,7 +69,27 @@ The logging will log:
 * Request duration in milliseconds
 * The requestURI (path + querystring), and if proxied the new requestURI
 
-## docker
+## Tech
+
+### test
+
+```go
+go test ./...
+```
+
+### run
+
+```go
+go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+```
+
+### build
+
+```go
+go build .
+```
+
+### docker
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
@@ -98,7 +98,7 @@ docker stop wmts-proxy
 docker rm wmts-proxy
 ```
 
-## docker-compose
+### docker-compose
 
 ```docker-compose
 docker-compose up
