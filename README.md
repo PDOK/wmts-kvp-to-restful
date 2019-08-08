@@ -80,7 +80,7 @@ go test ./...
 ### run
 
 ```go
-go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+go run . -host=http://{target host} -t={WMTS Capabilities template} -l=true
 ```
 
 ### build
@@ -93,12 +93,14 @@ go build .
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run -v /example:/example --name wmts-proxy -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+docker run -v /example:/config --name wmts-proxy -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=http://localhost -t=./config/WMTSCapabilities.template.xml -l=true
 docker stop wmts-proxy
 docker rm wmts-proxy
 ```
 
 ### docker-compose
+
+In the folder example there is a docker-compose which will start both the wmts-kvp-to-restful proxy and a mapproxy with a [OSM](https://www.openstreetmap.org) wmts service.
 
 ```docker-compose
 docker-compose up
