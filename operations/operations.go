@@ -81,7 +81,7 @@ func missingKeys(query url.Values, keys []string) Exception {
 
 // ProcessRequest checks the quality of the request
 // and if it's valid to process as a WMTS request
-func ProcessRequest(config *Config, w http.ResponseWriter, r *http.Request) bool {
+func ProcessRequest(config Config, w http.ResponseWriter, r *http.Request) bool {
 
 	// check if it's a WMTS request
 	query, err := keysToLowerAndFilter(r.URL.Query())

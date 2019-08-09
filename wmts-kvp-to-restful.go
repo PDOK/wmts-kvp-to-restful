@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	operations "github.com/PDOK/wmts-kvp-to-restful/operations"
+	log "github.com/sirupsen/logrus"
 )
 
 // https://ndersson.me/post/capturing_status_code_in_net_http/
@@ -42,14 +43,18 @@ func exists(path string) bool {
 	return true
 }
 
-func main() {
+var config operations.Config
 
+func init() {
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
 	template := flag.String("t", "", "Optional GetCapabilities template file, if not set request will be proxied.")
-	logrequest := flag.Bool("l", false, "Enable request logging, default: false")
+	logging := flag.Bool("l", false, "Enable request logging, default: false")
 	flag.Parse()
 
+	config = operations.Config{Host: *host, Template: *template, Logging: *logging}
+
 	if len(*host) == 0 {
+
 		log.Fatal("No target host is configured")
 		return
 	}
@@ -58,9 +63,18 @@ func main() {
 		return
 	}
 
-	config := &operations.Config{Host: *host, Template: *template, Logging: *logrequest}
+	log.SetLevel(log.InfoLevel)
+}
 
-	origin, _ := url.Parse(*host)
+func main() {
+	logger := make(chan string, 10000)
+	go func() {
+		for msg := range logger {
+			log.Println(msg)
+		}
+	}()
+
+	origin, _ := url.Parse(config.Host)
 
 	director := func(req *http.Request) {
 		req.URL.Host = origin.Host
@@ -78,12 +92,9 @@ func main() {
 		return
 	})
 
-	log.Println("wmts-kvp-to-restful started")
+	logger <- "wmts-kvp-to-restful started"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-
-		// Simple logging ...
-		// TODO put logging on a chan for async output
 		var logrequesturi string
 		var start time.Time
 		var elapsed time.Duration
@@ -103,9 +114,9 @@ func main() {
 		if config.Logging {
 			elapsed = time.Since(start)
 			if mustproxy {
-				log.Printf("%d %s %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), logrequesturi, r.URL.RequestURI())
+				logger <- fmt.Sprintf("%d %s %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), logrequesturi, r.URL.RequestURI())
 			} else {
-				log.Printf("%d %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), r.URL.RequestURI())
+				logger <- fmt.Sprintf("%d %s %s", lrw.statusCode, elapsed.Round(time.Millisecond), r.URL.RequestURI())
 			}
 		}
 		return

@@ -102,7 +102,7 @@ func TestProcessGetCapabilitiesRequest(t *testing.T) {
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	config := &Config{Host: "localhost", Template: "testTemplate"}
+	config := Config{Host: "localhost", Template: "testTemplate"}
 
 	content := "http://example.com/example/path"
 	status := 200
