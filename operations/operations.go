@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Host     string
 	Template string
+	Logging  bool
 }
 
 // Convert all the keys to lowercase and checks if there is only

@@ -75,9 +75,20 @@ func TestGetCapabilitiesTemplate(t *testing.T) {
 }
 
 func TestGetCapabilitiesKeys(t *testing.T) {
-	expected := []string{"request", "service"}
-	if !reflect.DeepEqual(getCapabilitiesKeys(), expected) {
-		t.Errorf("Expected %s but was not, got: %s", expected, getCapabilitiesKeys())
+	expected := []string{"request", "service", "version"}
+	result := getCapabilitiesKeys()
+
+	for k, v := range expected {
+		present := false
+		for _, j := range result {
+
+			if j == v {
+				present = true
+			}
+		}
+		if !present {
+			t.Errorf("Expected %s but was not, got: %s", result[k], v)
+		}
 	}
 }
 

@@ -1,0 +1,27 @@
+version: '2.1'
+services:
+  proxy:
+    image: pdok/wmts-kvp-to-restful
+    restart: unless-stopped      
+    command: ["wmts-kvp-to-restful", "-host=http://mapproxy:80","-t=./config/WMTSCapabilities.template.xml","-l=true"]
+    ports:
+      - "9001:9001"
+    volumes:
+      - ./config:/config
+    networks:
+      proxy-network:
+  mapproxy:
+    image: pdok/mapproxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    labels:
+      nl.pdok.application.group: "mapproxy"
+      SERVICE_CHECK_HTTP: "/"
+      SERVICE_NAME: demo-mapproxy
+    volumes:
+      - ./config:/srv/mapproxy/config
+    networks:
+      proxy-network:
+networks:
+  proxy-network:

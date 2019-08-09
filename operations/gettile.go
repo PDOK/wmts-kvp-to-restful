@@ -50,7 +50,7 @@ func tileQueryToPath(query url.Values) string {
 
 // GetCapabilitiesKeys list of manitory WMTS gettile key value pairs
 func getTileKeys() []string {
-	return []string{"layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
+	return []string{"service", "request", "version", "layer", "tilematrixset", "tilematrix", "tilecol", "tilerow", "format"}
 }
 
 // ProcessGetTileRequest rewrites the KVP request as RestFUL

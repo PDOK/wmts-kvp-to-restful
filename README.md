@@ -45,6 +45,30 @@ With an incorrect tilematrix value of BPL72VL:11 instead of 11. Through a regex 
 
 ![gwc-issue](img/gwc-issue.png)
 
+## WMTS Capabilities
+
+WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo requests. While the main focus of the wmts-kvp-to-restful application is rewriting the GetTile request, the other two requesttypes still part of the WMTS KVP spec. So when starting the application there is the option in setting an template for the WMTS GetCapabilities request.
+
+```cmd
+-t=./path/to/template/WMTSCapabilities.template.xml
+```
+
+An example of this template can be found in the example dir.
+
+## Logging
+
+Logging is disabled by default and can be enabled by setting the parameter ```-l=true```.
+
+```cmd
+-l=true
+```
+
+The logging will log:
+
+* HTTP Status Code
+* Request duration in milliseconds
+* The requestURI (path + querystring), and if proxied the new requestURI
+
 ## Tech
 
 ### test
@@ -56,7 +80,7 @@ go test ./...
 ### run
 
 ```go
-go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+go run . -host=http://{target host} -t={WMTS Capabilities template} -l=true
 ```
 
 ### build
@@ -65,26 +89,18 @@ go run . -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabili
 go build .
 ```
 
-## WMTS Capabilities
-
-WMTS requests come in 3 flavours: GetTile, GetCapabilities and GetFeatureInfo requests. While the main focus of the wmts-kvp-to-restful application is rewriting the GetTile request, the other two requesttypes still part of the WMTS KVP spec. So when starting the application there is the option in setting an template for the WMTS GetCapabilities request.
-
-```cmd
--t=./path/to/template/WMTSCapabilities.template.xml
-```
-
-An example of this template can be found in the example dir.
-
-## docker
+### docker
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run -v /example:/example --name wmts-proxy -d -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=https://geodata.nationaalgeoregister.nl -t=./example/WMTSCapabilities.template.xml -l=true
+docker run -v /example:/config --name wmts-proxy -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=http://localhost -t=./config/WMTSCapabilities.template.xml -l=true
 docker stop wmts-proxy
 docker rm wmts-proxy
 ```
 
-## docker-compose
+### docker-compose
+
+In the folder example there is a docker-compose which will start both the wmts-kvp-to-restful proxy and a mapproxy with a [OSM](https://www.openstreetmap.org) wmts service.
 
 ```docker-compose
 docker-compose up
