@@ -43,7 +43,7 @@ func exists(path string) bool {
 	return true
 }
 
-var config operations.Config
+var config *operations.Config
 
 func init() {
 	host := flag.String("host", "http://localhost", "Hostname to proxy with protocol, http/https and port")
@@ -51,7 +51,7 @@ func init() {
 	logging := flag.Bool("l", false, "Enable request logging, default: false")
 	flag.Parse()
 
-	config = operations.Config{Host: *host, Template: *template, Logging: *logging}
+	config = &operations.Config{Host: *host, Template: *template, Logging: *logging}
 
 	if len(*host) == 0 {
 

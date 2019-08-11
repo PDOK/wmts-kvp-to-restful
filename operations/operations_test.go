@@ -132,7 +132,7 @@ func TestProcessRequestNoWMTS(t *testing.T) {
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	config := Config{Host: "localhost", Template: "testTemplate"}
+	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			proxy = ProcessRequest(config, w, mockRequest)
@@ -157,7 +157,7 @@ func TestProcessRequest(t *testing.T) {
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	config := Config{Host: "localhost", Template: "testTemplate"}
+	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_ = ProcessRequest(config, w, mockRequest)
@@ -186,7 +186,7 @@ func TestProcessRequestUnknownService(t *testing.T) {
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	config := Config{Host: "localhost", Template: "testTemplate"}
+	config := &Config{Host: "localhost", Template: "testTemplate"}
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_ = ProcessRequest(config, w, mockRequest)
