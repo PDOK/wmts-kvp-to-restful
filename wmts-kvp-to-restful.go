@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	operations "github.com/PDOK/wmts-kvp-to-restful/operations"
+	"github.com/PDOK/wmts-kvp-to-restful/operations"
 )
 
 // https://ndersson.me/post/capturing_status_code_in_net_http/
