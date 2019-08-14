@@ -2,6 +2,7 @@ package operations
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"strconv"
 	"text/template"
@@ -15,29 +16,37 @@ type HostAndPath struct {
 }
 
 func hostAndPath(r *http.Request) HostAndPath {
-	var protocol, host, path string
-	if len(r.Header.Get("X-Forwarded-Proto")) > 1 {
-		protocol = r.Header.Get("X-Forwarded-Proto")
-	} else {
-		protocol = "http"
+	protocol := "http"
+	host := r.Host
+	path := r.URL.Path
+
+	xfp, ok := r.Header["X-Forwarded-Proto"]
+	if ok {
+		protocol = xfp[0]
 	}
 
-	// Maybe something with port
-	if len(r.Header.Get("X-Forward-Host")) > 1 {
-		host = r.Header.Get("X-Forward-Host")
-	} else if len(r.URL.Host) > 0 {
-		host = r.URL.Host
-	} else {
-		host = "localhost:9001"
+	xfh, ok := r.Header["X-Forwarded-Host"]
+	if ok {
+		host = xfh[0]
 	}
 
-	if len(r.Header.Get("X-Script-Name")) > 1 {
-		path = r.Header.Get("X-Script-Name")
-	} else {
-		path = r.URL.Path
+	// Used by K8s proxy
+	xfu, ok := r.Header["X-Forwarded-Uri"]
+	if ok {
+		path = xfu[0]
 	}
 
-	return HostAndPath{Protocol: protocol, Host: host, Path: path}
+	// Used by Traefik on PathPrefixStrip rules
+	xfpr, ok := r.Header["X-Forwarded-Prefix"]
+	if ok {
+		path = xfpr[0]
+	}
+
+	retval := HostAndPath{Protocol: protocol, Host: host, Path: path}
+
+	fmt.Printf("%+v\n", retval)
+
+	return retval
 }
 
 // GetCapabilitiesTemplate usage the path to return the template file
