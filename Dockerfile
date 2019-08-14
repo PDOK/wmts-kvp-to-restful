@@ -5,6 +5,7 @@ RUN apk update && apk upgrade && \
    apk add --no-cache bash git gcc musl-dev
 
 ENV GO111MODULE=on
+ENV GOPROXY=https://proxy.golang.org
 
 WORKDIR /go/src/server
 
