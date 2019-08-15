@@ -2,7 +2,6 @@ package operations
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -49,8 +48,6 @@ func hostAndPath(r *http.Request) HostAndPath {
 	}
 
 	retval := HostAndPath{Protocol: protocol, Host: host, Path: path}
-
-	fmt.Printf("%+v\n", retval)
 
 	return retval
 }
