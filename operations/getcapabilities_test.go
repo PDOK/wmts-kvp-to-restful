@@ -38,7 +38,7 @@ func TestHostAndPath(t *testing.T) {
 }
 
 func TestHostAndPathHeaders(t *testing.T) {
-	headers := http.Header{"X-Forwarded-Proto": {"https"}, "X-Forward-Host": {"new.example.org"}, "X-Script-Name": {"/new/example/path"}}
+	headers := http.Header{"X-Forwarded-Proto": {"https"}, "X-Forwarded-Host": {"new.example.org"}, "X-Forwarded-Uri": {"/new/example/path"}}
 	var mockRequest = &http.Request{
 		Method:     "GET",
 		Host:       "example.com",
