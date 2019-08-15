@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -22,12 +23,17 @@ func hostAndPath(r *http.Request) HostAndPath {
 
 	xfp, ok := r.Header["X-Forwarded-Proto"]
 	if ok {
+
 		protocol = xfp[0]
 	}
 
 	xfh, ok := r.Header["X-Forwarded-Host"]
 	if ok {
-		host = xfh[0]
+		// When multiple proxy enviroments are past, like some corporate infrastructures.
+		// Headers can be rewritten or appended, when a comma separated list is used it
+		// will take the `first` entry from the header
+		groups := strings.Split(xfh[0], ",")
+		host = groups[0]
 	}
 
 	// Used by K8s proxy
