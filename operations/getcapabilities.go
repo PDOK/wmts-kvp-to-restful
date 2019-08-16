@@ -2,9 +2,9 @@ package operations
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 )
 
@@ -21,30 +21,33 @@ func hostAndPath(r *http.Request) HostAndPath {
 	path := r.URL.Path
 
 	xfp, ok := r.Header["X-Forwarded-Proto"]
-	if ok {
+	if ok && len(xfp[0]) > 0 {
+
 		protocol = xfp[0]
 	}
 
 	xfh, ok := r.Header["X-Forwarded-Host"]
-	if ok {
-		host = xfh[0]
+	if ok && len(xfh[0]) > 0 {
+		// When multiple proxy enviroments are past, like some corporate infrastructures.
+		// Headers can be rewritten or appended, when a comma separated list is used it
+		// will take the `first` entry from the header
+		groups := strings.Split(xfh[0], ",")
+		host = groups[0]
 	}
 
 	// Used by K8s proxy
 	xfu, ok := r.Header["X-Forwarded-Uri"]
-	if ok {
+	if ok && len(xfu[0]) > 0 {
 		path = xfu[0]
 	}
 
 	// Used by Traefik on PathPrefixStrip rules
 	xfpr, ok := r.Header["X-Forwarded-Prefix"]
-	if ok {
+	if ok && len(xfpr[0]) > 0 {
 		path = xfpr[0]
 	}
 
 	retval := HostAndPath{Protocol: protocol, Host: host, Path: path}
-
-	fmt.Printf("%+v\n", retval)
 
 	return retval
 }
