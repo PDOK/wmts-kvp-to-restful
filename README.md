@@ -93,7 +93,7 @@ go build .
 
 ```docker
 docker build -t pdok/wmts-kvp-to-restful .
-docker run -v /example:/config --name wmts-proxy -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=http://localhost -t=./config/WMTSCapabilities.template.xml -l=true
+docker run -v `pwd`/example/config:/config --name wmts-proxy -p 9001:9001 pdok/wmts-kvp-to-restful /wmts-kvp-to-restful -host=http://localhost -t=./config/WMTSCapabilities.template.xml -l=true
 docker stop wmts-proxy
 docker rm wmts-proxy
 ```
