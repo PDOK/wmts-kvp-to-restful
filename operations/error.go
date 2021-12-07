@@ -55,12 +55,19 @@ func (w WMTSException) Status() int {
 
 // MissingParameterValue template
 func MissingParameterValue(value string) Exception {
-	return WMTSException{ErrorMessage: fmt.Sprintf("Missing parameter: %s", value), ErrorCode: "MissingParameterValue", StatusCode: 400}
+	return WMTSException{ErrorMessage: fmt.Sprintf("Missing parameter: %s", value),
+		ErrorCode: "MissingParameterValue", StatusCode: 400}
 }
 
 // UnknownService template
 func UnknownService(value string) Exception {
-	return WMTSException{ErrorMessage: fmt.Sprintf("Missing SERVICE key or incorrect value, found: %s", value), ErrorCode: "MissingParameterValue", StatusCode: 400}
+	return WMTSException{ErrorMessage: fmt.Sprintf("Missing SERVICE key or incorrect value, found: %s", value),
+		ErrorCode: "MissingParameterValue", StatusCode: 400}
+}
+
+func InvalidParameterValue(parameter string, value string) Exception {
+	return WMTSException{ErrorMessage: fmt.Sprintf("InvalidParameterValue for parameter: %s with value: %s",
+		parameter, value), ErrorCode: "InvalidParameterValue", StatusCode: 400}
 }
 
 // SendError writes the error message to the response
