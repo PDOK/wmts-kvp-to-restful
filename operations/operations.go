@@ -114,6 +114,13 @@ func ProcessRequest(config *Config, w http.ResponseWriter, r *http.Request) bool
 			return false
 		}
 		return false
+	case "getfeatureinfo":
+		err := ProcessGetFeatureInfoRequest(w, r)
+		if err != nil {
+			SendError(err, w, r)
+			return false
+		}
+		return true
 	default:
 		return true
 	}
