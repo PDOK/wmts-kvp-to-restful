@@ -11,7 +11,8 @@ import (
 
 var getFeatureInfoRegex = regexp.MustCompile(`^.*:(.*)$`)
 
-const getFeatureInfoRestTemplate = `/{{ .Layer }}/{{ .TileMatrixSet }}/{{ .TileMatrix }}/{{ .TileRow }}/{{ .TileCol }}/{{ .J }}/{{ .I }}{{ .FileExtension }}`
+// Although the spc indices that TileRow must supersede TileCol, this does not seem to work.
+const getFeatureInfoRestTemplate = `/{{ .Layer }}/{{ .TileMatrixSet }}/{{ .TileMatrix }}/{{ .TileCol }}/{{ .TileRow }}/{{ .J }}/{{ .I }}{{ .FileExtension }}`
 
 // ProcessGetFeatureInfoRequest - Translates KVP requests to RestFUL requests
 func ProcessGetFeatureInfoRequest(w http.ResponseWriter, r *http.Request) Exception {
