@@ -32,14 +32,14 @@ func TestProcessGetFeatureInfoRequest(t *testing.T) {
 		Host:   "example.com",
 		URL: &url.URL{Path: "local", RawQuery: "service=WMTS&request=GetFeatureInfo&version=1.0.0" +
 			"&layer=achtergrondvisualisatie&tilematrixset=EPSG:28992&tilematrix=14" +
-			"&tilecol=col&tilerow=row&infoformat=text/plain&j=1&i=2&testkey=testvalue"},
+			"&tilecol=col&tilerow=row&infoformat=plain/text&j=1&i=2&testkey=testvalue"},
 		Header:     http.Header{},
 		Proto:      "HTTP/1.1",
 		ProtoMajor: 1,
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	expected := "local/achtergrondvisualisatie/EPSG:28992/14/row/col/1/2.txt"
+	expected := "local/achtergrondvisualisatie/EPSG:28992/14/row/col/1/2.txt?testkey=testvalue"
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ProcessGetFeatureInfoRequest(w, mockRequest)
