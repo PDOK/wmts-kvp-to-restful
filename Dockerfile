@@ -17,6 +17,9 @@ ENV CGO_ENABLED=1
 #compile linux only
 ENV GOOS=linux
 
+#run all tests
+RUN go test github.com/PDOK/wmts-kvp-to-restful/operations
+
 #build the binary with debug information removed
 RUN go build -ldflags '-w -s -linkmode external -extldflags -static' -a -installsuffix cgo -o /wmts-kvp-to-restful .
 
