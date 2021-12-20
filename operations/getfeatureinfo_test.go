@@ -39,7 +39,7 @@ func TestProcessGetFeatureInfoRequest(t *testing.T) {
 		ProtoMinor: 1,
 		RemoteAddr: "192.0.2.1:1234",
 	}
-	expected := "local/achtergrondvisualisatie/EPSG:28992/14/row/col/1/2.txt?testkey=testvalue"
+	expected := "local/achtergrondvisualisatie/EPSG:28992/14/row/col/2/1.txt?testkey=testvalue"
 	ts := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ProcessGetFeatureInfoRequest(w, mockRequest)
