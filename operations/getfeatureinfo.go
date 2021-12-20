@@ -11,7 +11,6 @@ import (
 
 var getFeatureInfoRegex = regexp.MustCompile(`^.*:(.*)$`)
 
-// Although the spc indices that TileRow must supersede TileCol, this does not seem to work.
 const getFeatureInfoRestTemplate = `/{{ .Layer }}/{{ .TileMatrixSet }}/{{ .TileMatrix }}/{{ .TileCol }}/{{ .TileRow }}/{{ .I }}/{{ .J }}{{ .FileExtension }}`
 
 // ProcessGetFeatureInfoRequest - Translates KVP requests to RestFUL requests
