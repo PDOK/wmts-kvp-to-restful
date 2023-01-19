@@ -63,16 +63,6 @@ func TestFindMissingParamsMissing(t *testing.T) {
 	}
 }
 
-func TestUnknownService(t *testing.T) {
-
-	s := "teststring"
-	err := UnknownService(s)
-
-	if !strings.Contains(err.Error(), s) {
-		t.Errorf("Error should contain: %s, got: %s", s, err.Error())
-	}
-}
-
 func TestMissingParameterValue(t *testing.T) {
 
 	s := "teststring"

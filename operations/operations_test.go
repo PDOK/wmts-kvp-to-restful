@@ -52,7 +52,7 @@ func TestKeysToLowerAndFilterDouble(t *testing.T) {
 		t.Errorf("Got an error: %s", err)
 	}
 
-	if !strings.Contains(err.Error(), "A: B,1") {
+	if !strings.Contains(err.Error(), "A") {
 		t.Errorf("Got an error: %s", err)
 	}
 }
@@ -168,7 +168,7 @@ func TestProcessRequest(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	expected := "Multiple query values found for service: wbs,wks"
+	expected := "Multiple query values found for key: service"
 	body := getBodyAsString(resp.Body)
 	if !strings.Contains(body, expected) {
 		t.Errorf("Expected %s but was not, got: %s", expected, body)
@@ -197,7 +197,7 @@ func TestProcessRequestUnknownService(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	expected := "Missing SERVICE key or incorrect value, found: wbs"
+	expected := "Missing SERVICE key or incorrect value"
 	body := getBodyAsString(resp.Body)
 	if !strings.Contains(body, expected) {
 		t.Errorf("Expected %s but was not, got: %s", expected, body)

@@ -82,7 +82,7 @@ func parseFileExtension(format string) (string, Exception) {
 	case "text/xml":
 		fileExtension = ".xml"
 	default:
-		return "", InvalidParameterValue("infoformat", fileExtension)
+		return "", InvalidParameterValue("infoformat")
 	}
 	return fileExtension, nil
 }
