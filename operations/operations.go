@@ -21,7 +21,7 @@ func keysToLowerAndFilter(query url.Values) (url.Values, Exception) {
 
 	for key, values := range query {
 		if len(values) != 1 {
-			return nil, WMTSException{ErrorMessage: fmt.Sprintf("Multiple query values found for %s: %s", key, strings.Join(values, ",")), ErrorCode: "InvalidParameterValue", StatusCode: 400}
+			return nil, WMTSException{ErrorMessage: fmt.Sprintf("Multiple query values found for key: %s", key), ErrorCode: "InvalidParameterValue", StatusCode: 400}
 		}
 		newquery[strings.ToLower(key)] = values
 	}
@@ -91,7 +91,7 @@ func ProcessRequest(config *Config, w http.ResponseWriter, r *http.Request) bool
 	} else if len(query["service"]) < 1 || len(query["request"]) < 1 {
 		return true
 	} else if len(query["service"]) > 0 && strings.ToLower(query["service"][0]) != "wmts" {
-		SendError(UnknownService(query["service"][0]), w, r)
+		SendError(UnknownService(), w, r)
 		return false
 	}
 
