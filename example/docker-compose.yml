@@ -15,12 +15,10 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-    labels:
-      nl.pdok.application.group: "mapproxy"
-      SERVICE_CHECK_HTTP: "/"
-      SERVICE_NAME: demo-mapproxy
+    environment:
+      - DEBUG=1
     volumes:
-      - ./config:/srv/mapproxy/config
+      - ./config/mapproxy.yaml:/srv/mapproxy/config/mapproxy.yaml
     networks:
       proxy-network:
 networks:
