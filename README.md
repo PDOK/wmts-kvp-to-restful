@@ -69,6 +69,11 @@ The logging will log:
 * Request duration in milliseconds
 * The requestURI (path + querystring), and if proxied the new requestURI
 
+## Shutdown delay
+
+Delay (in seconds) before initiating graceful shutdown (e.g. useful in k8s to allow ingress controller to update their
+endpoints list. The default is 0. Can be set with the parameter `-d=15`.
+
 ## Tech
 
 ### test
